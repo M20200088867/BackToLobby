@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { searchGames, getPopularGames } from "@/lib/igdb";
+import { searchGames, getPopularGames, isIGDBConfigured } from "@/lib/igdb";
 import { cacheGames } from "@/lib/supabase/game-cache";
 
 interface IGDBRequestBody {
@@ -9,6 +9,13 @@ interface IGDBRequestBody {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isIGDBConfigured()) {
+    return NextResponse.json(
+      { error: "not_configured" },
+      { status: 503 }
+    );
+  }
+
   try {
     const body = (await request.json()) as IGDBRequestBody;
     const action = body.action ?? "search";

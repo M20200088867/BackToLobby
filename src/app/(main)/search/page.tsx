@@ -2,11 +2,18 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, AlertCircle } from "lucide-react";
+import { Search, X, AlertCircle, Info } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { transformIGDBGames } from "@/lib/igdb-transforms";
 import { GameGrid } from "@/components/game";
 import type { IGDBGame } from "@/types/igdb";
+
+class NotConfiguredError extends Error {
+  constructor() {
+    super("IGDB not configured");
+    this.name = "NotConfiguredError";
+  }
+}
 
 async function searchIGDB(query: string) {
   const res = await fetch("/api/igdb", {
@@ -15,7 +22,11 @@ async function searchIGDB(query: string) {
     body: JSON.stringify({ action: "search", query }),
   });
 
-  if (!res.ok) throw new Error("Search request failed");
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    if (data.error === "not_configured") throw new NotConfiguredError();
+    throw new Error("Search request failed");
+  }
 
   const raw: IGDBGame[] = await res.json();
   return transformIGDBGames(raw);
@@ -28,14 +39,20 @@ export default function SearchPage() {
   const {
     data: games,
     isLoading,
-    isError,
+    error,
   } = useQuery({
     queryKey: ["igdb-search", debouncedQuery],
     queryFn: () => searchIGDB(debouncedQuery),
     enabled: debouncedQuery.length >= 2,
+    retry: (failureCount, err) => {
+      if (err instanceof NotConfiguredError) return false;
+      return failureCount < 2;
+    },
   });
 
   const showResults = debouncedQuery.length >= 2;
+  const isNotConfigured = error instanceof NotConfiguredError;
+  const isError = !!error && !isNotConfigured;
 
   return (
     <div className="space-y-8">
@@ -61,23 +78,40 @@ export default function SearchPage() {
       </div>
 
       {/* States */}
-      {!showResults && (
+      {!showResults && !isNotConfigured && (
         <p className="text-muted-foreground text-center py-12">
           Type at least 2 characters to search IGDB.
         </p>
       )}
 
-      {isError && showResults && (
-        <div className="glass p-6 rounded-2xl flex items-center gap-3 border-destructive/30">
-          <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
-          <p className="text-sm text-destructive">
-            Search failed. Check that IGDB credentials are configured and try
-            again.
+      {isNotConfigured && (
+        <div className="glass p-6 rounded-2xl flex items-center gap-3">
+          <Info className="h-5 w-5 text-muted-foreground shrink-0" />
+          <p className="text-sm text-muted-foreground">
+            IGDB API credentials are not configured. Add{" "}
+            <code className="text-xs bg-white/10 px-1.5 py-0.5 rounded">
+              IGDB_CLIENT_ID
+            </code>{" "}
+            and{" "}
+            <code className="text-xs bg-white/10 px-1.5 py-0.5 rounded">
+              IGDB_CLIENT_SECRET
+            </code>{" "}
+            to your <code className="text-xs bg-white/10 px-1.5 py-0.5 rounded">.env.local</code> to
+            enable search.
           </p>
         </div>
       )}
 
-      {showResults && !isError && (
+      {isError && showResults && (
+        <div className="glass p-6 rounded-2xl flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+          <p className="text-sm text-destructive">
+            Search failed. Please try again.
+          </p>
+        </div>
+      )}
+
+      {showResults && !isError && !isNotConfigured && (
         <>
           {!isLoading && games && games.length === 0 && (
             <p className="text-muted-foreground text-center py-12">

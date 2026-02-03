@@ -5,9 +5,17 @@ const IGDB_BASE_URL = "https://api.igdb.com/v4";
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
+export function isIGDBConfigured(): boolean {
+  return !!(process.env.IGDB_CLIENT_ID && process.env.IGDB_CLIENT_SECRET);
+}
+
 export async function getIGDBToken(): Promise<string> {
   if (cachedToken && Date.now() < cachedToken.expiresAt) {
     return cachedToken.token;
+  }
+
+  if (!isIGDBConfigured()) {
+    throw new Error("IGDB credentials not configured");
   }
 
   const res = await fetch("https://id.twitch.tv/oauth2/token", {
