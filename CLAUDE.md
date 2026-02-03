@@ -164,12 +164,20 @@ Tracks current state against PRD Section 6 milestones. Update this after each wo
 - [x] Graceful degradation: no crashes without env vars, caching silently skips without Supabase
 - [x] `pnpm type-check`, `pnpm lint`, `pnpm build` all pass clean
 
-### Milestone 3: Auth & Profile — NOT STARTED
-- Set up Supabase project, create tables from schema
-- Configure Google OAuth in Supabase dashboard
-- Build login page with Google sign-in button
-- Implement Steam OpenID flow via custom API route
-- Build editable user profile page (avatar, cover, bio, platform badges)
+### Milestone 3: Auth & Profile — COMPLETED
+- [x] `isSupabaseConfigured()` helper (`src/lib/supabase/helpers.ts`) for graceful degradation
+- [x] Google avatar domain (`lh3.googleusercontent.com`) added to `next.config.ts` remotePatterns
+- [x] `useAuth` hook (`src/hooks/use-auth.ts`): session management, profile fetching, Google OAuth, sign out
+- [x] `AuthProvider` context (`src/lib/auth-context.tsx`) wrapping app via Providers component
+- [x] Login page with Google sign-in button, error/config banners, Suspense boundary for searchParams
+- [x] `UserMenu` component (`src/components/layout/user-menu.tsx`): avatar dropdown with profile link + sign out
+- [x] Navbar updated to client component with `<UserMenu />` integrated
+- [x] `UserProfile` component (`src/components/user/user-profile.tsx`): cover, avatar, bio, platform badges, inline edit mode (owner only)
+- [x] `UserNotFound` component (`src/components/user/user-not-found.tsx`)
+- [x] User profile page (`src/app/(main)/user/[username]/page.tsx`): server component fetching profile + auth user, renders UserProfile or UserNotFound
+- [x] Auth callback route enhanced with Supabase config guard
+- [x] Graceful degradation: login shows info banner, navbar shows non-functional "Sign In", profile shows not-found when Supabase not configured
+- [x] `pnpm type-check`, `pnpm lint`, `pnpm build` all pass clean
 
 ### Milestone 4: Core Loop — NOT STARTED
 - ReviewDrawer component (slide-up Sheet with star rating, markdown editor, platform dropdown)

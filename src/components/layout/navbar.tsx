@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { Gamepad2, Search } from "lucide-react";
+import { UserMenu } from "@/components/layout/user-menu";
 
 export function Navbar() {
   return (
@@ -25,6 +28,7 @@ export function Navbar() {
               <span className="text-xs">&#8984;</span>K
             </kbd>
           </Link>
+          <UserMenu />
         </div>
       </div>
     </nav>

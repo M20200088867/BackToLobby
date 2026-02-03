@@ -1,3 +1,8 @@
+import { isSupabaseConfigured } from "@/lib/supabase/helpers";
+import { createClient } from "@/lib/supabase/server";
+import { UserProfile, UserNotFound } from "@/components/user";
+import type { User } from "@/types";
+
 export default async function UserPage({
   params,
 }: {
@@ -5,13 +10,27 @@ export default async function UserPage({
 }) {
   const { username } = await params;
 
-  return (
-    <div className="glass p-8 rounded-3xl space-y-4">
-      <h1 className="text-3xl font-bold">@{username}</h1>
-      <p className="text-muted-foreground">
-        User profile — bio, platform badges, gaming diary, and stats coming
-        soon.
-      </p>
-    </div>
-  );
+  if (!isSupabaseConfigured()) {
+    return <UserNotFound />;
+  }
+
+  const supabase = await createClient();
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("*")
+    .eq("username", username)
+    .single();
+
+  if (!profile) {
+    return <UserNotFound />;
+  }
+
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+
+  const isOwner = authUser?.id === profile.id;
+
+  return <UserProfile profile={profile as User} isOwner={isOwner} />;
 }
