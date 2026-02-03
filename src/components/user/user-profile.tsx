@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Pencil, X, Check, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/helpers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { User } from "@/types";
@@ -52,6 +53,11 @@ export function UserProfile({ profile: initialProfile, isOwner }: UserProfilePro
   }
 
   async function save() {
+    if (!isSupabaseConfigured()) {
+      setError("Supabase is not configured. Cannot save profile.");
+      return;
+    }
+
     setSaving(true);
     setError(null);
 
