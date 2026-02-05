@@ -27,6 +27,14 @@ pnpm lint             # ESLint
 pnpm type-check       # TypeScript type checking (tsc --noEmit)
 ```
 
+## Workflow Rules
+
+1. **After auth changes, always test the full flow:** login → redirect → verify session persists → refresh page → logout → verify session cleared. Do not mark auth work complete until this passes.
+
+2. **When fixing bugs, run actual reproduction steps before marking complete.** Type checks passing ≠ bug fixed. Execute the exact steps that triggered the bug and show evidence it's resolved.
+
+3. **For feature implementations, create acceptance criteria upfront and verify each one.** Don't mark a milestone complete until all criteria are demonstrated working.
+
 ## Architecture
 
 ### Directory Structure (App Router)
@@ -167,29 +175,50 @@ Tracks current state against PRD Section 6 milestones. Update this after each wo
 ### Milestone 3: Auth & Profile — COMPLETED
 - [x] `isSupabaseConfigured()` helper (`src/lib/supabase/helpers.ts`) for graceful degradation
 - [x] Google avatar domain (`lh3.googleusercontent.com`) added to `next.config.ts` remotePatterns
-- [x] `useAuth` hook (`src/hooks/use-auth.ts`): session management, profile fetching, Google OAuth, sign out
+- [x] `useAuth` hook (`src/hooks/use-auth.ts`): session management, profile fetching, Google OAuth, email/password auth, sign out
 - [x] `AuthProvider` context (`src/lib/auth-context.tsx`) wrapping app via Providers component
-- [x] Login page with Google sign-in button, error/config banners, Suspense boundary for searchParams
+- [x] Login page with email/password form + Google sign-in button, error/config banners, Suspense boundary for searchParams
+- [x] Sign-up page (`src/app/(auth)/signup/page.tsx`): email/password registration with confirmation message
+- [x] Email confirmation route (`src/app/(auth)/confirm/route.ts`): handles email verification OTP, creates user profile
 - [x] `UserMenu` component (`src/components/layout/user-menu.tsx`): avatar dropdown with profile link + sign out
 - [x] Navbar updated to client component with `<UserMenu />` integrated
 - [x] `UserProfile` component (`src/components/user/user-profile.tsx`): cover, avatar, bio, platform badges, inline edit mode (owner only)
 - [x] `UserNotFound` component (`src/components/user/user-not-found.tsx`)
 - [x] User profile page (`src/app/(main)/user/[username]/page.tsx`): server component fetching profile + auth user, renders UserProfile or UserNotFound
 - [x] Auth callback route enhanced with Supabase config guard
+- [x] Browser Supabase client (`src/lib/supabase/client.ts`): fixed cookie handlers for session persistence
 - [x] Graceful degradation: login shows info banner, navbar shows non-functional "Sign In", profile shows not-found when Supabase not configured
 - [x] `pnpm type-check`, `pnpm lint`, `pnpm build` all pass clean
 
-### Milestone 4: Core Loop — NOT STARTED
-- ReviewDrawer component (slide-up Sheet with star rating, markdown editor, platform dropdown)
-- StarRating component (1-5 with half-star support)
-- "Log Game" button on game pages and search results
-- Save reviews to Supabase, display on game pages
-- Like system on reviews
+### Milestone 4: Core Loop — COMPLETED
+- [x] `StarRating` component (`src/components/review/star-rating.tsx`): 1-5 with half-star support, hover preview, read-only mode, sm/md/lg sizes
+- [x] `ReviewDrawer` component (`src/components/review/review-drawer.tsx`): slide-up Sheet with star rating, platform dropdown, textarea, submit/update/delete
+- [x] `ReviewDrawerProvider` context (`src/components/review/review-drawer-context.tsx`): app-level context so any component can trigger the drawer, checks auth, fetches existing review for edit mode
+- [x] `Providers` updated to wrap with `ReviewDrawerProvider` inside `AuthProvider`
+- [x] `LogGameButton` component (`src/components/review/log-game-button.tsx`): card-overlay (circular "+") and standalone variants
+- [x] `GameCard` restructured from `<Link>` wrapper to `<div>` with Link + LogGameButton overlay on hover
+- [x] `useGameReviews` and `useRecentReviews` hooks (`src/hooks/use-reviews.ts`): direct Supabase queries with user/game joins
+- [x] `ReviewCard` component (`src/components/review/review-card.tsx`): glass card with user, rating, comment, platform badge, time, like button
+- [x] `ReviewCardSkeleton` component (`src/components/review/review-card-skeleton.tsx`)
+- [x] `RecentReviews` component (`src/components/review/recent-reviews.tsx`): replaces home page skeleton placeholders
+- [x] `GamePageContent` client component (`src/components/game/game-page-content.tsx`): cover, metadata, summary, LogGameButton, reviews list
+- [x] Game detail page (`/game/[slug]`) upgraded from stub: server-side IGDB fetch + `GamePageContent`
+- [x] `useReviewLikes` hook (`src/hooks/use-likes.ts`): count + isLiked state
+- [x] `LikeButton` component (`src/components/review/like-button.tsx`): optimistic toggle with rollback, heart icon
+- [x] `timeAgo()` utility added to `src/lib/utils.ts`
+- [x] Review barrel export (`src/components/review/index.ts`)
+- [x] `pnpm type-check`, `pnpm lint`, `pnpm build` all pass clean
 
-### Milestone 5: Game Page — NOT STARTED
-- Full game detail page: cover art, metadata from IGDB, global score from reviews
-- PriceCard component showing live deals from CheapShark
-- Reviews section with filters (newest, highest rated)
+### Milestone 5: Game Page — COMPLETED
+- [x] `useGamePrices` hook (`src/hooks/use-prices.ts`): TanStack Query hook fetching from `/api/prices`, 5-minute staleTime
+- [x] `PriceCard` component (`src/components/game/price-card.tsx`): glass card with store names, sale/normal prices, savings %, external links to CheapShark redirects
+- [x] `useGameStats` hook (`src/hooks/use-game-stats.ts`): calculates average rating and total review count from Supabase
+- [x] `GlobalScore` component (`src/components/game/global-score.tsx`): gradient pill with star icon showing average rating + review count
+- [x] `ReviewFilters` component (`src/components/review/review-filters.tsx`): pill-style toggle buttons for "Newest" / "Highest Rated"
+- [x] `useGameReviews` updated with `sortBy` parameter: supports "newest" (created_at desc) and "highest" (rating desc)
+- [x] `GamePageContent` restructured: 3-column grid layout with reviews (2 cols) + PriceCard sidebar (1 col), GlobalScore in header
+- [x] Review barrel export updated (`src/components/review/index.ts`)
+- [x] `pnpm type-check`, `pnpm lint`, `pnpm build` all pass clean
 
 ### Milestone 6: Polish — NOT STARTED
 - Framer Motion page transitions and micro-animations
