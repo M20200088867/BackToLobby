@@ -4,19 +4,18 @@ import { isSupabaseConfigured } from "@/lib/supabase/helpers";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get("code");
+  const token_hash = searchParams.get("token_hash");
+  const type = searchParams.get("type");
   const next = searchParams.get("next") ?? "/";
 
   if (!isSupabaseConfigured()) {
     return NextResponse.redirect(`${origin}/login?error=not_configured`);
   }
 
-  if (code) {
-    // Create the redirect response FIRST - cookies will be set on this object
+  if (token_hash && type) {
     const redirectUrl = `${origin}${next}`;
     const response = NextResponse.redirect(redirectUrl);
 
-    // Create supabase client that reads from request cookies and writes to response cookies
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -34,7 +33,10 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.verifyOtp({
+      token_hash,
+      type: type as "signup" | "recovery" | "email",
+    });
 
     if (!error && data.user) {
       // Check if user profile exists, create if not
@@ -45,15 +47,11 @@ export async function GET(request: NextRequest) {
         .single();
 
       if (!existingProfile) {
-        // Create new profile from OAuth data
-        const metadata = data.user.user_metadata;
+        // Create new profile from email
         const email = data.user.email || "";
 
-        // Generate username from email or name
-        let username =
-          metadata?.name?.toLowerCase().replace(/\s+/g, "") ||
-          email.split("@")[0] ||
-          `user${Date.now()}`;
+        // Generate username from email prefix
+        let username = email.split("@")[0] || `user${Date.now()}`;
 
         // Ensure username is unique by checking and appending random suffix if needed
         const { data: usernameCheck } = await supabase
@@ -69,7 +67,7 @@ export async function GET(request: NextRequest) {
         const { error: insertError } = await supabase.from("users").insert({
           id: data.user.id,
           username,
-          avatar_url: metadata?.avatar_url || metadata?.picture || null,
+          avatar_url: null,
           bio: null,
           steam_id: null,
           psn_id: null,
@@ -82,7 +80,6 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Return the response with session cookies attached
       return response;
     }
   }

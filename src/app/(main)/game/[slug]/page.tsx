@@ -1,3 +1,7 @@
+import { notFound } from "next/navigation";
+import { getGameBySlug, isIGDBConfigured } from "@/lib/igdb";
+import { transformIGDBGame } from "@/lib/igdb-transforms";
+import { GamePageContent } from "@/components/game/game-page-content";
 import { Gamepad2 } from "lucide-react";
 
 export default async function GamePage({
@@ -7,16 +11,33 @@ export default async function GamePage({
 }) {
   const { slug } = await params;
 
-  return (
-    <div className="glass p-8 rounded-3xl space-y-4">
-      <div className="flex items-center gap-3">
-        <Gamepad2 className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold">{slug.replace(/-/g, " ")}</h1>
+  if (!isIGDBConfigured()) {
+    return (
+      <div className="glass p-8 rounded-3xl space-y-4 text-center">
+        <Gamepad2 className="h-12 w-12 text-muted-foreground/50 mx-auto" />
+        <h1 className="text-2xl font-bold">
+          {slug.replace(/-/g, " ")}
+        </h1>
+        <p className="text-muted-foreground">
+          IGDB is not configured. Set IGDB_CLIENT_ID and IGDB_CLIENT_SECRET to
+          enable game data.
+        </p>
       </div>
-      <p className="text-muted-foreground">
-        Game detail page — cover art, metadata, pricing, and reviews coming
-        soon.
-      </p>
-    </div>
+    );
+  }
+
+  const rawGame = await getGameBySlug(slug);
+
+  if (!rawGame) {
+    notFound();
+  }
+
+  const game = transformIGDBGame(rawGame);
+
+  return (
+    <GamePageContent
+      game={game}
+      summary={rawGame.summary}
+    />
   );
 }
