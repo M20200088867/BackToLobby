@@ -101,6 +101,18 @@ export function ReviewDrawerProvider({ children }: { children: React.ReactNode }
     setExistingReview(null);
   }, []);
 
+  // Clean up body pointer-events when drawer closes
+  // Radix UI Dialog can leave pointer-events: none on body if close animation
+  // doesn't complete cleanly (e.g. due to re-renders from query invalidation)
+  useEffect(() => {
+    if (!isOpen) {
+      const timer = setTimeout(() => {
+        document.body.style.pointerEvents = "";
+      }, 300); // match close animation duration
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
   const contextValue = useMemo(
     () => ({ openReviewDrawer, closeReviewDrawer }),
     [openReviewDrawer, closeReviewDrawer]

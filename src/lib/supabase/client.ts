@@ -1,6 +1,10 @@
 import { createBrowserClient } from "@supabase/ssr";
 
+let client: ReturnType<typeof createBrowserClient> | null = null;
+
 export function createClient() {
+  if (client) return client;
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -10,32 +14,6 @@ export function createClient() {
     );
   }
 
-  return createBrowserClient(url, anonKey, {
-    cookies: {
-      getAll() {
-        const pairs = document.cookie.split("; ");
-        return pairs
-          .filter(Boolean)
-          .map((pair) => {
-            const [name, ...rest] = pair.split("=");
-            return { name: name || "", value: decodeURIComponent(rest.join("=")) };
-          })
-          .filter((cookie) => cookie.name);
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          let cookie = `${name}=${encodeURIComponent(value)}`;
-          if (options?.path) cookie += `; path=${options.path}`;
-          // Handle maxAge - 0 or negative means delete the cookie
-          if (options?.maxAge !== undefined) {
-            cookie += `; max-age=${options.maxAge}`;
-          }
-          if (options?.domain) cookie += `; domain=${options.domain}`;
-          if (options?.sameSite) cookie += `; samesite=${options.sameSite}`;
-          if (options?.secure) cookie += `; secure`;
-          document.cookie = cookie;
-        });
-      },
-    },
-  });
+  client = createBrowserClient(url, anonKey);
+  return client;
 }

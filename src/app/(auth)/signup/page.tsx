@@ -60,11 +60,13 @@ function SignUpContent() {
     const result = await signUpWithEmail(email, password);
     if (result.error) {
       setError(result.error);
-      setIsSubmitting(false);
-    } else {
+    } else if (result.needsConfirmation) {
+      // Email confirmation required — show "check your email" screen
       setSuccess(true);
-      setIsSubmitting(false);
     }
+    // else: auto-confirmed — session will be set via onAuthStateChange,
+    // and the redirect useEffect above will navigate to "/"
+    setIsSubmitting(false);
   };
 
   // Show nothing while redirecting (already logged in)

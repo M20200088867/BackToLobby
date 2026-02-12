@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Gamepad2 } from "lucide-react";
+import { motion } from "framer-motion";
 import { LogGameButton } from "@/components/review/log-game-button";
 import type { Game } from "@/types";
 
@@ -12,9 +13,9 @@ interface GameCardProps {
 
 export function GameCard({ game }: GameCardProps) {
   return (
-    <div className="group relative">
+    <motion.div className="group relative" whileHover={{ scale: 1.03 }}>
       <Link href={`/game/${game.slug}`} className="block">
-        <div className="glass relative aspect-[3/4] overflow-hidden rounded-2xl transition-transform duration-300 group-hover:scale-[1.03]">
+        <div className="glass relative aspect-[3/4] overflow-hidden rounded-2xl">
           {game.cover_url ? (
             <Image
               src={game.cover_url}
@@ -56,6 +57,6 @@ export function GameCard({ game }: GameCardProps) {
       <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
         <LogGameButton game={game} variant="card-overlay" />
       </div>
-    </div>
+    </motion.div>
   );
 }

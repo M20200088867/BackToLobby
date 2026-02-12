@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Gamepad2, Search } from "lucide-react";
+import { Gamepad2 } from "lucide-react";
+import { CommandPalette } from "@/components/search/command-palette";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
 
 export function Navbar() {
@@ -17,17 +19,9 @@ export function Navbar() {
             BackToLobby
           </span>
         </Link>
-        <div className="flex items-center gap-4">
-          <Link
-            href="/search"
-            className="glass flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-xl"
-          >
-            <Search className="h-4 w-4" />
-            <span className="hidden sm:inline">Search games...</span>
-            <kbd className="hidden md:inline-flex h-5 items-center gap-1 rounded border border-white/10 bg-white/5 px-1.5 font-mono text-[10px] text-muted-foreground">
-              <span className="text-xs">&#8984;</span>K
-            </kbd>
-          </Link>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <CommandPalette />
+          <ThemeToggle />
           <UserMenu />
         </div>
       </div>

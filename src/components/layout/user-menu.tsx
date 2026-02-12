@@ -80,7 +80,7 @@ export function UserMenu() {
     );
   }
 
-  if (!session || !user) {
+  if (!session) {
     return (
       <Link
         href="/login"
@@ -88,6 +88,13 @@ export function UserMenu() {
       >
         Sign In
       </Link>
+    );
+  }
+
+  // Session exists but profile still loading — show loading avatar
+  if (!user) {
+    return (
+      <div className="h-8 w-8 rounded-full bg-white/10 animate-pulse" />
     );
   }
 

@@ -31,22 +31,33 @@ export function useGameReviews(
         // If game not in local cache, return empty (no reviews possible)
         if (gameError || !game) return [];
 
-        let query = supabase
+        // Try with user join, fall back to without
+        const { data, error } = await supabase
           .from("reviews")
           .select("*, user:users(*)")
-          .eq("game_id", game.id);
-
-        if (sortBy === "highest") {
-          query = query.order("rating", { ascending: false });
-        } else {
-          query = query.order("created_at", { ascending: false });
-        }
-
-        const { data, error } = await query;
+          .eq("game_id", game.id)
+          .order(sortBy === "highest" ? "rating" : "created_at", {
+            ascending: false,
+          });
 
         if (error) {
-          console.error("Failed to fetch game reviews:", error);
-          return [];
+          console.warn(
+            "Game reviews with join failed, retrying without:",
+            error.message
+          );
+          const { data: fallback, error: fbError } = await supabase
+            .from("reviews")
+            .select("*")
+            .eq("game_id", game.id)
+            .order(sortBy === "highest" ? "rating" : "created_at", {
+              ascending: false,
+            });
+
+          if (fbError) {
+            console.error("Failed to fetch game reviews:", fbError);
+            return [];
+          }
+          return (fallback ?? []) as Review[];
         }
 
         return (data ?? []) as Review[];
@@ -73,6 +84,7 @@ export function useRecentReviews(limit = 10) {
       try {
         const supabase = createClient();
 
+        // Try with user+game join
         const { data, error } = await supabase
           .from("reviews")
           .select("*, user:users(*), game:games(*)")
@@ -80,8 +92,21 @@ export function useRecentReviews(limit = 10) {
           .limit(limit);
 
         if (error) {
-          console.error("Failed to fetch recent reviews:", error);
-          return [];
+          console.warn(
+            "Recent reviews with join failed, retrying without:",
+            error.message
+          );
+          const { data: fallback, error: fbError } = await supabase
+            .from("reviews")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(limit);
+
+          if (fbError) {
+            console.error("Failed to fetch recent reviews:", fbError);
+            return [];
+          }
+          return (fallback ?? []) as Review[];
         }
 
         return (data ?? []) as Review[];

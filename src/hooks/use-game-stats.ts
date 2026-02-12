@@ -46,7 +46,7 @@ export function useGameStats(gameIgdbId: number) {
           return DEFAULT_STATS;
         }
 
-        const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
+        const sum = reviews.reduce((acc: number, r: { rating: number }) => acc + r.rating, 0);
         const averageRating = sum / reviews.length;
 
         return {

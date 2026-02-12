@@ -4,13 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Gamepad2 } from "lucide-react";
 import type { IGDBGame } from "@/types/igdb";
 import { transformIGDBGames } from "@/lib/igdb-transforms";
-import { GameGrid } from "./game-grid";
+import { GameCarousel } from "./game-carousel";
+import { GameCardSkeleton } from "./game-card-skeleton";
 
 async function fetchPopularGames() {
   const res = await fetch("/api/igdb", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "popular", limit: 12 }),
+    body: JSON.stringify({ action: "popular", limit: 20 }),
   });
 
   if (!res.ok) {
@@ -34,11 +35,11 @@ export function TrendingGames() {
   // Not configured — show placeholder cards
   if (!isLoading && games === null) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div className="flex gap-4 overflow-hidden">
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="glass aspect-[3/4] rounded-2xl flex items-center justify-center"
+            className="glass aspect-[3/4] w-40 md:w-44 lg:w-48 shrink-0 rounded-2xl flex items-center justify-center"
           >
             <Gamepad2 className="h-8 w-8 text-muted-foreground/50" />
           </div>
@@ -47,12 +48,19 @@ export function TrendingGames() {
     );
   }
 
-  return (
-    <GameGrid
-      games={games ?? undefined}
-      isLoading={isLoading}
-      skeletonCount={6}
-      columns="6"
-    />
-  );
+  if (isLoading) {
+    return (
+      <div className="flex gap-4 overflow-hidden">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="w-40 md:w-44 lg:w-48 shrink-0">
+            <GameCardSkeleton />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!games || games.length === 0) return null;
+
+  return <GameCarousel games={games} />;
 }

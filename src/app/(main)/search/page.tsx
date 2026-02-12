@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Search, X, AlertCircle, Info } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -32,8 +33,9 @@ async function searchIGDB(query: string) {
   return transformIGDBGames(raw);
 }
 
-export default function SearchPage() {
-  const [query, setQuery] = useState("");
+function SearchContent() {
+  const searchParams = useSearchParams();
+  const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const debouncedQuery = useDebounce(query);
 
   const {
@@ -127,5 +129,13 @@ export default function SearchPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense>
+      <SearchContent />
+    </Suspense>
   );
 }

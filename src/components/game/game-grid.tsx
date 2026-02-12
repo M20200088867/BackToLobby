@@ -1,3 +1,7 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { staggerContainer, staggerItem } from "@/lib/motion";
 import type { Game } from "@/types";
 import { GameCard } from "./game-card";
 import { GameCardSkeleton } from "./game-card-skeleton";
@@ -22,15 +26,28 @@ export function GameGrid({
   skeletonCount = 6,
   columns = "6",
 }: GameGridProps) {
+  if (isLoading) {
+    return (
+      <div className={`grid ${columnClasses[columns]} gap-4`}>
+        {Array.from({ length: skeletonCount }).map((_, i) => (
+          <GameCardSkeleton key={i} />
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className={`grid ${columnClasses[columns]} gap-4`}>
-      {isLoading
-        ? Array.from({ length: skeletonCount }).map((_, i) => (
-            <GameCardSkeleton key={i} />
-          ))
-        : games?.map((game) => (
-            <GameCard key={game.igdb_id || game.id} game={game} />
-          ))}
-    </div>
+    <motion.div
+      className={`grid ${columnClasses[columns]} gap-4`}
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+    >
+      {games?.map((game) => (
+        <motion.div key={game.igdb_id || game.id} variants={staggerItem}>
+          <GameCard game={game} />
+        </motion.div>
+      ))}
+    </motion.div>
   );
 }

@@ -54,8 +54,8 @@ function LoginContent() {
     const result = await signInWithEmail(email, password);
     if (result.error) {
       setEmailError(result.error);
-      setIsSubmitting(false);
     }
+    setIsSubmitting(false);
     // If successful, the auth state change will trigger redirect
   };
 

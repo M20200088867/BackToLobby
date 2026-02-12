@@ -220,10 +220,23 @@ Tracks current state against PRD Section 6 milestones. Update this after each wo
 - [x] Review barrel export updated (`src/components/review/index.ts`)
 - [x] `pnpm type-check`, `pnpm lint`, `pnpm build` all pass clean
 
-### Milestone 6: Polish — NOT STARTED
-- Framer Motion page transitions and micro-animations
-- Command palette (Cmd+K) with instant IGDB search
-- Home page trending carousel (based on review volume)
-- Infinite scroll on global feed
-- Responsive refinements
-- Theme toggle (dark/light) in navbar
+### Milestone 6: Polish — COMPLETED
+- [x] `ThemeToggle` component (`src/components/layout/theme-toggle.tsx`): Sun/Moon toggle with `useSyncExternalStore` hydration guard
+- [x] Navbar updated with `ThemeToggle` between search and user menu
+- [x] `motion.ts` shared motion variants: `pageVariants`, `staggerContainer`, `staggerItem`, `fadeIn`
+- [x] `PageTransition` component (`src/components/layout/page-transition.tsx`): fade+slide on mount
+- [x] Main layout wraps children in `<PageTransition>`
+- [x] `GameCard` uses `motion.div` with `whileHover={{ scale: 1.03 }}`
+- [x] `GameGrid` converted to client component with stagger animations on game cards
+- [x] `RecentReviews` grid uses stagger animations
+- [x] `CommandPalette` component (`src/components/search/command-palette.tsx`): `cmdk` + global Cmd+K shortcut, debounced IGDB search, glass styling, keyboard navigation, "View all results" link
+- [x] Navbar search link replaced with `<CommandPalette />`
+- [x] Search page accepts `?q=` query param from command palette, wrapped in `<Suspense>`
+- [x] `GameCarousel` component (`src/components/game/game-carousel.tsx`): horizontal scroll with snap, prev/next chevrons, stagger animation
+- [x] `.scrollbar-hide` and `.scroll-snap-x` CSS utilities added to `globals.css`
+- [x] `TrendingGames` uses `GameCarousel` instead of `GameGrid`, fetches 20 games
+- [x] `useInfiniteRecentReviews` hook (`src/hooks/use-infinite-reviews.ts`): `useInfiniteQuery` with 10-per-page pagination
+- [x] `RecentReviews` uses infinite scroll with `IntersectionObserver` sentinel, loading spinner, end-of-feed message
+- [x] Responsive refinements: navbar `gap-2 sm:gap-4`, hero text scaling, palette full-width on mobile
+- [x] ESLint config updated to ignore `.claude/` directory
+- [x] `pnpm type-check`, `pnpm lint`, `pnpm build` all pass clean

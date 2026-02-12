@@ -162,6 +162,20 @@
     var(--background);
 }
 
+/* ── Scrollbar hide ── */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Scroll snap ── */
+.scroll-snap-x {
+  scroll-snap-type: x mandatory;
+}
+
 /* ── Glass utility ── */
 .glass {
   background: var(--glass-bg);
