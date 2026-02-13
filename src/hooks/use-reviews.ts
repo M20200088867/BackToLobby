@@ -34,7 +34,7 @@ export function useGameReviews(
         // Try with user join, fall back to without
         const { data, error } = await supabase
           .from("reviews")
-          .select("*, user:users(id,username,avatar_url)")
+          .select("*, user:users!reviews_user_id_fkey(id,username,avatar_url)")
           .eq("game_id", game.id)
           .order(sortBy === "highest" ? "rating" : "created_at", {
             ascending: false,
@@ -86,7 +86,7 @@ export function useRecentReviews(limit = 10) {
         // Try with user+game join
         const { data, error } = await supabase
           .from("reviews")
-          .select("*, user:users(id,username,avatar_url), game:games(id,igdb_id,title,cover_url,slug)")
+          .select("*, user:users!reviews_user_id_fkey(id,username,avatar_url), game:games(id,igdb_id,title,cover_url,slug)")
           .order("created_at", { ascending: false })
           .limit(limit);
 

@@ -22,7 +22,7 @@ export function useInfiniteRecentReviews() {
 
         const { data, error } = await supabase
           .from("reviews")
-          .select("*, user:users(id,username,avatar_url), game:games(id,igdb_id,title,cover_url,slug)")
+          .select("*, user:users!reviews_user_id_fkey(id,username,avatar_url), game:games(id,igdb_id,title,cover_url,slug)")
           .order("created_at", { ascending: false })
           .range(from, to);
 
