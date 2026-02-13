@@ -201,21 +201,6 @@ export function useAuth() {
     };
   }, [configured, fetchProfile]);
 
-  const signInWithGoogle = useCallback(async () => {
-    if (!configured) return;
-    try {
-      const supabase = createClient();
-      await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/callback`,
-        },
-      });
-    } catch (err) {
-      console.error("Google sign-in error:", err);
-    }
-  }, [configured]);
-
   const signUpWithEmail = useCallback(
     async (
       email: string,
@@ -310,7 +295,6 @@ export function useAuth() {
   return {
     ...state,
     configured,
-    signInWithGoogle,
     signUpWithEmail,
     signInWithEmail,
     signOut,

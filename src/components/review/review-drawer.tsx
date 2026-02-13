@@ -5,12 +5,12 @@ import Image from "next/image";
 import { Gamepad2, Loader2, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { StarRating } from "./star-rating";
 import { isSupabaseConfigured } from "@/lib/supabase/helpers";
@@ -179,12 +179,11 @@ export function ReviewDrawer({
   if (!game) return null;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="bottom"
-        className="glass border-white/10 rounded-t-3xl max-h-[85vh] overflow-y-auto"
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="glass border-white/10 rounded-3xl max-w-lg max-h-[85vh] overflow-y-auto bg-background/80 backdrop-blur-2xl"
       >
-        <SheetHeader className="pb-2">
+        <DialogHeader className="pb-2">
           <div className="flex items-center gap-4">
             {game.cover_url ? (
               <Image
@@ -200,20 +199,20 @@ export function ReviewDrawer({
               </div>
             )}
             <div>
-              <SheetTitle className="text-lg">{game.title}</SheetTitle>
-              <SheetDescription>
+              <DialogTitle className="text-lg">{game.title}</DialogTitle>
+              <DialogDescription>
                 {isEditMode ? "Edit your review" : "Log this game"}
-              </SheetDescription>
+              </DialogDescription>
             </div>
           </div>
-        </SheetHeader>
+        </DialogHeader>
 
         {isLoadingReview ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="space-y-6 px-4 pb-4">
+          <div className="space-y-6">
             {/* Rating */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">
@@ -303,7 +302,7 @@ export function ReviewDrawer({
             </div>
           </div>
         )}
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }

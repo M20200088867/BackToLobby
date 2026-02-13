@@ -1,6 +1,6 @@
 import { isSupabaseConfigured } from "@/lib/supabase/helpers";
 import { createClient } from "@/lib/supabase/server";
-import { UserProfile, UserNotFound } from "@/components/user";
+import { UserProfile, UserNotFound, UserReviewsList } from "@/components/user";
 import type { User } from "@/types";
 
 export default async function UserPage({
@@ -32,5 +32,10 @@ export default async function UserPage({
 
   const isOwner = authUser?.id === profile.id;
 
-  return <UserProfile profile={profile as User} isOwner={isOwner} />;
+  return (
+    <div className="space-y-8">
+      <UserProfile profile={profile as User} isOwner={isOwner} />
+      <UserReviewsList userId={profile.id} />
+    </div>
+  );
 }

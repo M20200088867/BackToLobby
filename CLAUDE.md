@@ -35,6 +35,8 @@ pnpm type-check       # TypeScript type checking (tsc --noEmit)
 
 3. **For feature implementations, create acceptance criteria upfront and verify each one.** Don't mark a milestone complete until all criteria are demonstrated working.
 
+4. **Test every feature visually in the browser before marking complete.** Type checks and builds passing is necessary but not sufficient.
+
 ## Architecture
 
 ### Directory Structure (App Router)
@@ -73,9 +75,9 @@ src/
 
 2. **Games table is a cache.** The `games` table in Supabase is populated on-demand when users interact with a game. IGDB is the source of truth. When a game is searched/reviewed, upsert it into the local `games` table by `igdb_id`.
 
-3. **Auth uses Supabase Auth** with OAuth providers (Google, Steam). Steam OAuth requires custom implementation since Supabase doesn't natively support it — handle via API route that completes the OpenID flow and creates/links the Supabase user.
+3. **Auth uses Supabase Auth** with email/password. OAuth providers (Google, Steam) may be added later.
 
-4. **Review flow uses a slide-up drawer** (not a modal or page). The drawer appears over the game page, keeping context visible. Built with shadcn/ui Sheet component + glass styling.
+4. **Review flow uses centered Dialog modals** (not a drawer or page). Both the review writer and the review detail reader are centered glass-styled Dialog popups. Built with shadcn/ui Dialog component + glass styling.
 
 5. **Search has two modes:** a Cmd+K command palette for quick access (global keyboard shortcut) and a full `/search` page for browsing with filters.
 
@@ -93,6 +95,13 @@ games:    id (int8 PK), igdb_id (unique), title, cover_url, slug, genres (text[]
 reviews:  id (uuid PK), user_id (FK→users), game_id (FK→games), rating (float 1-5), comment (text), platform_played, created_at
 likes:    user_id (FK→users), review_id (FK→reviews), PRIMARY KEY (user_id, review_id)
 ```
+
+### Required RLS Policies
+
+- **users:** SELECT = public (needed for review joins to show usernames), INSERT/UPDATE = authenticated with `auth.uid() = id`
+- **games:** SELECT = public (needed for review joins to show game info), INSERT/UPDATE = authenticated
+- **reviews:** SELECT = public, INSERT/UPDATE/DELETE = authenticated with `auth.uid() = user_id`
+- **likes:** SELECT = public, INSERT/DELETE = authenticated with `auth.uid() = user_id`
 
 ## Design System: Glass Theme
 
@@ -239,4 +248,20 @@ Tracks current state against PRD Section 6 milestones. Update this after each wo
 - [x] `RecentReviews` uses infinite scroll with `IntersectionObserver` sentinel, loading spinner, end-of-feed message
 - [x] Responsive refinements: navbar `gap-2 sm:gap-4`, hero text scaling, palette full-width on mobile
 - [x] ESLint config updated to ignore `.claude/` directory
+- [x] `pnpm type-check`, `pnpm lint`, `pnpm build` all pass clean
+
+### Milestone 7: Fixes & Refinements — COMPLETED
+- [x] shadcn/ui Dialog component added (`src/components/ui/dialog.tsx`)
+- [x] Review data joins optimized: specific column selects (`user:users(id,username,avatar_url)`, `game:games(id,igdb_id,title,cover_url,slug)`) instead of `*`
+- [x] Error logging improved: `console.error` with error code, details, and RLS policy hints
+- [x] Likes hook optimized: parallel `Promise.all` for count + isLiked, `.maybeSingle()` instead of `.single()`
+- [x] Review writer converted from bottom Sheet to centered Dialog modal with glass styling
+- [x] Pointer-events fix: `MutationObserver` replaces fragile `setTimeout(300)`, belt-and-suspenders clear in `onOpenChange`
+- [x] `ReviewDetailDialog` component (`src/components/review/review-detail-dialog.tsx`): full review read popup with user/game links
+- [x] `ReviewCard` updated: click-to-expand opens detail dialog, avatar/username wrapped in `<Link>` to user profile, `stopPropagation` on interactive elements
+- [x] `useUserReviews` hook (`src/hooks/use-user-reviews.ts`): fetch reviews by user ID with game join
+- [x] `UserReviewsList` component (`src/components/user/user-reviews-list.tsx`): compact list with game covers, ratings, timestamps
+- [x] User profile page shows `<UserReviewsList>` below `<UserProfile>`
+- [x] Google OAuth removed: `signInWithGoogle` deleted from auth hook, Google button and divider removed from login page
+- [x] CLAUDE.md updated: workflow rule #4, Required RLS Policies subsection, architecture note #4 updated
 - [x] `pnpm type-check`, `pnpm lint`, `pnpm build` all pass clean

@@ -101,16 +101,36 @@ export function ReviewDrawerProvider({ children }: { children: React.ReactNode }
     setExistingReview(null);
   }, []);
 
-  // Clean up body pointer-events when drawer closes
-  // Radix UI Dialog can leave pointer-events: none on body if close animation
-  // doesn't complete cleanly (e.g. due to re-renders from query invalidation)
+  // Clean up body pointer-events when dialog closes.
+  // Radix UI Dialog sets pointer-events: none on body and may not clean it up
+  // if close animation doesn't complete cleanly (e.g. due to re-renders from
+  // query invalidation). We use a MutationObserver as the primary fix and a
+  // belt-and-suspenders direct clear in the onOpenChange handler.
   useEffect(() => {
-    if (!isOpen) {
-      const timer = setTimeout(() => {
+    if (isOpen) return;
+
+    // Immediate clear when dialog closes
+    document.body.style.pointerEvents = "";
+
+    // Watch for Radix re-applying pointer-events: none after we cleared it
+    const observer = new MutationObserver(() => {
+      if (document.body.style.pointerEvents === "none") {
         document.body.style.pointerEvents = "";
-      }, 300); // match close animation duration
-      return () => clearTimeout(timer);
-    }
+      }
+    });
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["style"],
+    });
+
+    // Stop observing after animations complete (500ms is generous)
+    const timer = setTimeout(() => observer.disconnect(), 500);
+
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
   }, [isOpen]);
 
   const contextValue = useMemo(
@@ -124,7 +144,10 @@ export function ReviewDrawerProvider({ children }: { children: React.ReactNode }
       <ReviewDrawer
         open={isOpen}
         onOpenChange={(open) => {
-          if (!open) closeReviewDrawer();
+          if (!open) {
+            document.body.style.pointerEvents = "";
+            closeReviewDrawer();
+          }
         }}
         game={game}
         existingReview={existingReview}

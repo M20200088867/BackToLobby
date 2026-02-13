@@ -34,16 +34,15 @@ export function useGameReviews(
         // Try with user join, fall back to without
         const { data, error } = await supabase
           .from("reviews")
-          .select("*, user:users(*)")
+          .select("*, user:users(id,username,avatar_url)")
           .eq("game_id", game.id)
           .order(sortBy === "highest" ? "rating" : "created_at", {
             ascending: false,
           });
 
         if (error) {
-          console.warn(
-            "Game reviews with join failed, retrying without:",
-            error.message
+          console.error(
+            `Game reviews join failed [${error.code}]: ${error.message}. Details: ${error.details}. Hint: Ensure RLS policies allow SELECT on users table (e.g., SELECT for public).`
           );
           const { data: fallback, error: fbError } = await supabase
             .from("reviews")
@@ -87,14 +86,13 @@ export function useRecentReviews(limit = 10) {
         // Try with user+game join
         const { data, error } = await supabase
           .from("reviews")
-          .select("*, user:users(*), game:games(*)")
+          .select("*, user:users(id,username,avatar_url), game:games(id,igdb_id,title,cover_url,slug)")
           .order("created_at", { ascending: false })
           .limit(limit);
 
         if (error) {
-          console.warn(
-            "Recent reviews with join failed, retrying without:",
-            error.message
+          console.error(
+            `Recent reviews join failed [${error.code}]: ${error.message}. Details: ${error.details}. Hint: Ensure RLS policies allow SELECT on users and games tables.`
           );
           const { data: fallback, error: fbError } = await supabase
             .from("reviews")

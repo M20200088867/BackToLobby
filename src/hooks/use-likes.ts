@@ -19,26 +19,31 @@ export function useReviewLikes(reviewId: string, userId?: string) {
 
       const supabase = createClient();
 
-      const { count, error } = await supabase
+      const countPromise = supabase
         .from("likes")
         .select("*", { count: "exact", head: true })
         .eq("review_id", reviewId);
 
-      if (error) throw error;
+      const isLikedPromise = userId
+        ? supabase
+            .from("likes")
+            .select("user_id")
+            .eq("review_id", reviewId)
+            .eq("user_id", userId)
+            .maybeSingle()
+        : Promise.resolve({ data: null });
 
-      let isLiked = false;
-      if (userId) {
-        const { data } = await supabase
-          .from("likes")
-          .select("user_id")
-          .eq("review_id", reviewId)
-          .eq("user_id", userId)
-          .single();
+      const [countResult, isLikedResult] = await Promise.all([
+        countPromise,
+        isLikedPromise,
+      ]);
 
-        isLiked = !!data;
-      }
+      if (countResult.error) throw countResult.error;
 
-      return { count: count ?? 0, isLiked };
+      return {
+        count: countResult.count ?? 0,
+        isLiked: !!isLikedResult.data,
+      };
     },
     staleTime: 30 * 1000,
   });

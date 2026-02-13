@@ -22,14 +22,13 @@ export function useInfiniteRecentReviews() {
 
         const { data, error } = await supabase
           .from("reviews")
-          .select("*, user:users(*), game:games(*)")
+          .select("*, user:users(id,username,avatar_url), game:games(id,igdb_id,title,cover_url,slug)")
           .order("created_at", { ascending: false })
           .range(from, to);
 
         if (error) {
-          console.warn(
-            "Infinite reviews with join failed, retrying without:",
-            error.message
+          console.error(
+            `Infinite reviews join failed [${error.code}]: ${error.message}. Details: ${error.details}. Hint: Ensure RLS policies allow SELECT on users and games tables.`
           );
           const { data: fallback, error: fbError } = await supabase
             .from("reviews")
