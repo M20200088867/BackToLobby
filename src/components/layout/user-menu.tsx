@@ -10,7 +10,7 @@ import { useAuthContext } from "@/lib/auth-context";
 function AvatarFallback({ username }: { username: string }) {
   const initials = username.slice(0, 2).toUpperCase();
   return (
-    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[var(--gradient-purple)] to-[var(--gradient-cyan)] flex items-center justify-center text-xs font-bold text-white">
+    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[var(--gradient-start)] to-[var(--gradient-end)] flex items-center justify-center text-xs font-bold text-white">
       {initials}
     </div>
   );

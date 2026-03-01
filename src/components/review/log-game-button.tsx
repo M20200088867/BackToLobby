@@ -33,7 +33,7 @@ export function LogGameButton({ game, variant = "standalone" }: LogGameButtonPro
   return (
     <Button
       onClick={() => openReviewDrawer(game)}
-      className="rounded-xl bg-gradient-to-r from-[var(--gradient-purple)] to-[var(--gradient-blue)] hover:opacity-90"
+      className="rounded-xl bg-gradient-to-r from-[var(--gradient-start)] to-[var(--gradient-end)] hover:opacity-90"
     >
       <Plus className="h-4 w-4 mr-2" />
       Log Game

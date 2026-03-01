@@ -278,7 +278,7 @@ export function ReviewDrawer({
               <Button
                 onClick={handleSubmit}
                 disabled={rating === 0 || isSaving}
-                className="flex-1 rounded-xl bg-gradient-to-r from-[var(--gradient-purple)] to-[var(--gradient-blue)] hover:opacity-90"
+                className="flex-1 rounded-xl bg-gradient-to-r from-[var(--gradient-start)] to-[var(--gradient-end)] hover:opacity-90"
               >
                 {isSaving ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />

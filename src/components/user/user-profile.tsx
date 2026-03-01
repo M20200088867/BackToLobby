@@ -110,7 +110,7 @@ export function UserProfile({ profile: initialProfile, isOwner }: UserProfilePro
             className="object-cover"
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-[var(--gradient-purple)]/30 to-[var(--gradient-cyan)]/30" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--gradient-start)]/20 to-[var(--gradient-end)]/20" />
         )}
       </div>
 
@@ -126,7 +126,7 @@ export function UserProfile({ profile: initialProfile, isOwner }: UserProfilePro
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="h-full w-full bg-gradient-to-br from-[var(--gradient-purple)] to-[var(--gradient-cyan)] flex items-center justify-center text-2xl font-bold text-white">
+            <div className="h-full w-full bg-gradient-to-br from-[var(--gradient-start)] to-[var(--gradient-end)] flex items-center justify-center text-2xl font-bold text-white">
               {profile.username.slice(0, 2).toUpperCase()}
             </div>
           )}

@@ -31,7 +31,7 @@ export function GlobalScore({ gameIgdbId }: GlobalScoreProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-white/10">
+      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-primary/15 to-primary/10 border border-white/10">
         <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
         <span className="text-lg font-bold">
           {stats.averageRating.toFixed(1)}

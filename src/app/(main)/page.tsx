@@ -8,9 +8,7 @@ export default function HomePage() {
       {/* Hero */}
       <section className="text-center space-y-6 pt-12">
         <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight">
-          <span className="bg-gradient-to-r from-[var(--gradient-purple)] via-[var(--gradient-blue)] to-[var(--gradient-cyan)] bg-clip-text text-transparent">
-            BackToLobby
-          </span>
+          <span className="text-primary">BackToLobby</span>
         </h1>
         <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
           Your gaming diary. Rate, review, and discover the games that matter.

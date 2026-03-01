@@ -13,7 +13,11 @@ interface GameCardProps {
 
 export function GameCard({ game }: GameCardProps) {
   return (
-    <motion.div className="group relative" whileHover={{ scale: 1.03 }}>
+    <motion.div
+      className="group relative hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/30 transition-shadow"
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.2 }}
+    >
       <Link href={`/game/${game.slug}`} className="block">
         <div className="glass relative aspect-[3/4] overflow-hidden rounded-2xl">
           {game.cover_url ? (
@@ -45,7 +49,7 @@ export function GameCard({ game }: GameCardProps) {
               {game.genres.slice(0, 2).map((genre) => (
                 <span
                   key={genre}
-                  className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/70"
+                  className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/15 text-white/80"
                 >
                   {genre}
                 </span>

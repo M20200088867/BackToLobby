@@ -15,9 +15,7 @@ export function Navbar() {
           className="flex items-center gap-2 text-lg font-bold"
         >
           <Gamepad2 className="h-6 w-6 text-primary" />
-          <span className="bg-gradient-to-r from-[var(--gradient-purple)] via-[var(--gradient-blue)] to-[var(--gradient-cyan)] bg-clip-text text-transparent">
-            BackToLobby
-          </span>
+          <span className="text-primary font-bold">BackToLobby</span>
         </Link>
         <div className="flex items-center gap-2 sm:gap-4">
           <CommandPalette />
