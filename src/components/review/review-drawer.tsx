@@ -142,6 +142,9 @@ export function ReviewDrawer({
 
       // Invalidate relevant caches
       await queryClient.invalidateQueries({ queryKey: ["reviews"] });
+      if (game.igdb_id) {
+        await queryClient.invalidateQueries({ queryKey: ["game-stats", game.igdb_id] });
+      }
 
       onOpenChange(false);
     } catch (err) {
@@ -167,6 +170,9 @@ export function ReviewDrawer({
       if (deleteError) throw deleteError;
 
       await queryClient.invalidateQueries({ queryKey: ["reviews"] });
+      if (game?.igdb_id) {
+        await queryClient.invalidateQueries({ queryKey: ["game-stats", game.igdb_id] });
+      }
 
       onOpenChange(false);
     } catch (err) {

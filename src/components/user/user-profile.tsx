@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Pencil, X, Check, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/helpers";
+import { useAuthContext } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { User } from "@/types";
@@ -24,6 +26,8 @@ function PlatformBadge({ label, value }: { label: string; value: string }) {
 }
 
 export function UserProfile({ profile: initialProfile, isOwner }: UserProfileProps) {
+  const router = useRouter();
+  const { refreshProfile } = useAuthContext();
   const [profile, setProfile] = useState(initialProfile);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -79,9 +83,8 @@ export function UserProfile({ profile: initialProfile, isOwner }: UserProfilePro
       .select()
       .single();
 
-    setSaving(false);
-
     if (dbError) {
+      setSaving(false);
       if (dbError.code === "23505") {
         setError("That username is already taken.");
       } else {
@@ -91,7 +94,15 @@ export function UserProfile({ profile: initialProfile, isOwner }: UserProfilePro
     }
 
     if (data) {
-      setProfile(data as User);
+      const savedProfile = data as User;
+      const usernameChanged = savedProfile.username !== profile.username;
+      setProfile(savedProfile);
+      await refreshProfile();
+      setSaving(false);
+      if (usernameChanged) {
+        router.replace(`/user/${savedProfile.username}`);
+        return;
+      }
     }
     setEditing(false);
   }

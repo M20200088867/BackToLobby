@@ -140,6 +140,19 @@ export function useAuth() {
     [configured, createProfile]
   );
 
+  const refreshProfile = useCallback(async (): Promise<void> => {
+    if (!configured) return;
+    try {
+      const supabase = createClient();
+      const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+      if (!supabaseUser) return;
+      const profile = await fetchProfile(supabaseUser);
+      setState((prev) => ({ ...prev, user: profile }));
+    } catch (err) {
+      console.error("Failed to refresh profile:", err);
+    }
+  }, [configured, fetchProfile]);
+
   useEffect(() => {
     if (!configured) return;
 
@@ -298,5 +311,6 @@ export function useAuth() {
     signUpWithEmail,
     signInWithEmail,
     signOut,
+    refreshProfile,
   };
 }
