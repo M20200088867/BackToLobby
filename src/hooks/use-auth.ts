@@ -10,6 +10,25 @@ import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/helpers";
 import type { User } from "@/types";
 
+function authUserToMinimal(supabaseUser: SupabaseUser): User {
+  const email = supabaseUser.email ?? "";
+  const meta = supabaseUser.user_metadata ?? {};
+  return {
+    id: supabaseUser.id,
+    username:
+      meta.name?.toLowerCase().replace(/[^a-z0-9]/g, "") ||
+      email.split("@")[0]?.replace(/[^a-z0-9]/g, "") ||
+      "user",
+    avatar_url: meta.avatar_url ?? meta.picture ?? null,
+    cover_url: null,
+    bio: null,
+    steam_id: null,
+    psn_id: null,
+    xbox_id: null,
+    created_at: supabaseUser.created_at,
+  };
+}
+
 interface AuthState {
   user: User | null;
   session: Session | null;
@@ -188,16 +207,81 @@ export function useAuth() {
         ) {
           if (session?.user) {
             // Set session IMMEDIATELY so UI shows authenticated state.
-            // Profile fetch can be slow (Supabase free tier cold start).
             setState((prev) => ({ ...prev, session, isLoading: false }));
-            // Then fetch profile in background
-            const profile = await fetchProfile(session.user);
-            if (mounted) {
-              setState((prev) => ({ ...prev, user: profile }));
-            }
+
+            // If profile fetch hangs (DB cold), show minimal user after 8s.
+            // The real profile replaces it whenever the DB warms up.
+            let profileFetchDone = false;
+            const fallbackTimer = setTimeout(() => {
+              if (!profileFetchDone && mounted) {
+                setState((prev) =>
+                  prev.user === null
+                    ? { ...prev, user: authUserToMinimal(session.user) }
+                    : prev
+                );
+              }
+            }, 8000);
+
+            fetchProfile(session.user).then((profile) => {
+              profileFetchDone = true;
+              clearTimeout(fallbackTimer);
+              if (mounted) {
+                setState((prev) => ({
+                  ...prev,
+                  user: profile ?? authUserToMinimal(session.user),
+                }));
+              }
+            });
           } else if (event === "INITIAL_SESSION") {
-            // No session on page load — user is not logged in
-            setState({ user: null, session: null, isLoading: false });
+            // No session on page load — check for auth cookies before committing to logged-out.
+            // On Supabase free tier cold starts, the token refresh can fail transiently,
+            // causing INITIAL_SESSION to fire with null even for authenticated users.
+            const hasAuthCookies =
+              typeof document !== "undefined" && document.cookie.includes("sb-");
+
+            if (hasAuthCookies) {
+              // Immediately show "Sign In" — don't hold the navbar blank for up to 5s.
+              setState({ user: null, session: null, isLoading: false });
+
+              // Background recovery: if Supabase was just cold-starting, restore the session.
+              void (async () => {
+                try {
+                  const timeoutPromise = new Promise<never>((_, reject) =>
+                    setTimeout(() => reject(new Error("timeout")), 8000)
+                  );
+                  const { data: { user: fallbackUser } } = await Promise.race([
+                    supabase.auth.getUser(),
+                    timeoutPromise,
+                  ]);
+                  if (fallbackUser && mounted) {
+                    // getSession() is safe here: getUser() already confirmed the token is valid.
+                    const { data: { session: recoveredSession } } =
+                      await supabase.auth.getSession();
+
+                    // Show authenticated state immediately — no DB call needed yet.
+                    if (mounted) {
+                      setState({
+                        user: authUserToMinimal(fallbackUser),
+                        session: recoveredSession ?? null,
+                        isLoading: false,
+                      });
+                    }
+
+                    // Fetch real profile in background (may be slow if DB cold).
+                    fetchProfile(fallbackUser).then((profile) => {
+                      if (mounted && profile) {
+                        setState((prev) => ({ ...prev, user: profile }));
+                      }
+                    });
+                  }
+                } catch {
+                  // Timeout or network error — already showing "Sign In", nothing to do.
+                }
+              })();
+            } else {
+              // No auth cookies — user has never logged in or already cleared cookies
+              setState({ user: null, session: null, isLoading: false });
+            }
           }
         } else if (event === "SIGNED_OUT") {
           if (mounted) {
