@@ -8,6 +8,13 @@ export interface User {
   psn_id: string | null;
   xbox_id: string | null;
   created_at: string;
+  favorite_game_id: number | null;
+  favorite_game?: {
+    id: number;
+    title: string;
+    cover_url: string | null;
+    slug: string;
+  };
 }
 
 export interface Game {

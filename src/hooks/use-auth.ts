@@ -26,6 +26,7 @@ function authUserToMinimal(supabaseUser: SupabaseUser): User {
     psn_id: null,
     xbox_id: null,
     created_at: supabaseUser.created_at,
+    favorite_game_id: null,
   };
 }
 

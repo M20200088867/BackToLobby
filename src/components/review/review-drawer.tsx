@@ -34,6 +34,7 @@ interface ReviewDrawerProps {
   game: Game | null;
   existingReview: Review | null;
   isLoadingReview: boolean;
+  onSaveComplete?: (opts: { game: Game; rating: number; isNewReview: boolean }) => void;
 }
 
 export function ReviewDrawer({
@@ -42,6 +43,7 @@ export function ReviewDrawer({
   game,
   existingReview,
   isLoadingReview,
+  onSaveComplete,
 }: ReviewDrawerProps) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
@@ -147,6 +149,7 @@ export function ReviewDrawer({
       }
 
       onOpenChange(false);
+      onSaveComplete?.({ game, rating, isNewReview: !isEditMode });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save review");
     } finally {

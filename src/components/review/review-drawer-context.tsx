@@ -6,6 +6,7 @@ import { useAuthContext } from "@/lib/auth-context";
 import { isSupabaseConfigured } from "@/lib/supabase/helpers";
 import { createClient } from "@/lib/supabase/client";
 import { ReviewDrawer } from "./review-drawer";
+import { FavoriteGamePrompt } from "@/components/user/favorite-game-prompt";
 import type { Game, Review } from "@/types";
 
 interface ReviewDrawerContextValue {
@@ -20,6 +21,7 @@ export function ReviewDrawerProvider({ children }: { children: React.ReactNode }
   const [game, setGame] = useState<Game | null>(null);
   const [existingReview, setExistingReview] = useState<Review | null>(null);
   const [isLoadingReview, setIsLoadingReview] = useState(false);
+  const [favPromptGame, setFavPromptGame] = useState<Game | null>(null);
   const { user, session, isLoading: isAuthLoading } = useAuthContext();
   const router = useRouter();
 
@@ -101,6 +103,16 @@ export function ReviewDrawerProvider({ children }: { children: React.ReactNode }
     setExistingReview(null);
   }, []);
 
+  const handleSaveComplete = useCallback(
+    ({ game: savedGame, rating, isNewReview }: { game: Game; rating: number; isNewReview: boolean }) => {
+      // Show favorite prompt only for new 5-star reviews
+      if (isNewReview && rating === 5) {
+        setFavPromptGame(savedGame);
+      }
+    },
+    []
+  );
+
   // Clean up body pointer-events when dialog closes.
   // Radix UI Dialog sets pointer-events: none on body and may not clean it up
   // if close animation doesn't complete cleanly (e.g. due to re-renders from
@@ -152,7 +164,22 @@ export function ReviewDrawerProvider({ children }: { children: React.ReactNode }
         game={game}
         existingReview={existingReview}
         isLoadingReview={isLoadingReview}
+        onSaveComplete={handleSaveComplete}
       />
+      {favPromptGame && user && (
+        <FavoriteGamePrompt
+          open={!!favPromptGame}
+          onOpenChange={(open) => {
+            if (!open) setFavPromptGame(null);
+          }}
+          game={favPromptGame}
+          userId={user.id}
+          onConfirmed={() => {
+            setFavPromptGame(null);
+            router.refresh();
+          }}
+        />
+      )}
     </ReviewDrawerContext.Provider>
   );
 }
