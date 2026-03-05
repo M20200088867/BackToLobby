@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BackToLobby
 
-## Getting Started
+A social platform for video game discovery and tracking — Letterboxd for games.
 
-First, run the development server:
+Users maintain a gaming diary, rate titles (1–5 stars with half-stars), write Markdown reviews, and discover trending games. The visual design is Apple Liquid Glass: glassmorphism on a clean white background with cherry red accents.
+
+---
+
+## Features
+
+- **Game discovery** — search any game via IGDB (Cmd+K palette or `/search` page)
+- **Reviews & ratings** — 1–5 star ratings with half-stars, Markdown comments
+- **Likes** — like individual reviews
+- **User profiles** — bio, avatar, social handles (Steam, PSN, Xbox), full review history
+- **Price comparison** — cheapest current deals via CheapShark
+- **Infinite scroll** — recent activity feed with lazy loading
+- **Dark/light mode** — light is the default, glass effects work on both
+
+---
+
+## Tech Stack
+
+| Layer | Choice |
+|---|---|
+| Framework | Next.js 16 (App Router, Turbopack) |
+| Language | TypeScript (strict) |
+| Styling | Tailwind CSS v4 + shadcn/ui |
+| Animations | Framer Motion |
+| Backend | Supabase (PostgreSQL + Auth) |
+| Data fetching | TanStack Query v5 |
+| Game data | IGDB API |
+| Price data | CheapShark API |
+| Package manager | pnpm |
+
+---
+
+## Development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+pnpm dev          # http://localhost:3000
+pnpm type-check   # TypeScript check
+pnpm lint         # ESLint
+pnpm build        # Production build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+IGDB_CLIENT_ID=
+IGDB_CLIENT_SECRET=
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Deployment
 
-To learn more about Next.js, take a look at the following resources:
+Two-branch model:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Branch | Environment | URL |
+|---|---|---|
+| `main` | Preview (staging) | Vercel preview URL |
+| `production` | Production (live) | backtolobby.vercel.app |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+CI runs type-check + lint on every push to `main` and every PR to `production`.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+To deploy to production: ask Claude to open a PR from `main` → `production`, review the summary, then approve.
