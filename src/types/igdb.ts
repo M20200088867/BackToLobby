@@ -18,6 +18,10 @@ export interface IGDBCompany {
   };
 }
 
+export interface IGDBPlatform {
+  name: string;
+}
+
 export interface IGDBGame {
   id: number;
   name: string;
@@ -29,4 +33,5 @@ export interface IGDBGame {
   summary?: string;
   aggregated_rating?: number;
   total_rating_count?: number;
+  platforms?: IGDBPlatform[];
 }

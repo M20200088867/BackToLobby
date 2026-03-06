@@ -15,9 +15,10 @@ import type { Game } from "@/types";
 interface GamePageContentProps {
   game: Game;
   summary?: string;
+  platforms?: string[];
 }
 
-export function GamePageContent({ game, summary }: GamePageContentProps) {
+export function GamePageContent({ game, summary, platforms }: GamePageContentProps) {
   const [reviewSort, setReviewSort] = useState<ReviewSortOption>("newest");
   const { data: reviews, isLoading } = useGameReviews(game.igdb_id, reviewSort);
 
@@ -114,7 +115,7 @@ export function GamePageContent({ game, summary }: GamePageContentProps) {
 
         {/* Sidebar */}
         <aside className="space-y-6">
-          <PriceCard gameTitle={game.title} />
+          <PriceCard gameTitle={game.title} platforms={platforms ?? []} />
         </aside>
       </div>
     </div>

@@ -55,6 +55,7 @@ async function igdbFetch(endpoint: string, body: string) {
       "Content-Type": "text/plain",
     },
     body,
+    cache: "no-store",
   });
 
   if (!res.ok) {
@@ -74,7 +75,7 @@ export async function searchGames(query: string, limit = 20) {
 export async function getGameBySlug(slug: string) {
   const results = await igdbFetch(
     "games",
-    `where slug = "${slug}"; fields name,slug,cover.image_id,genres.name,summary,first_release_date,involved_companies.company.name,aggregated_rating; limit 1;`
+    `where slug = "${slug}"; fields name,slug,cover.image_id,genres.name,summary,first_release_date,involved_companies.company.name,aggregated_rating,platforms.name; limit 1;`
   );
   return results[0] ?? null;
 }

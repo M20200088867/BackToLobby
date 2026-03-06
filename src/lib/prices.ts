@@ -14,13 +14,23 @@ export interface GameDeal {
 export async function getGamePrices(
   gameTitle: string
 ): Promise<GameDeal[]> {
-  const res = await fetch(
-    `${CHEAPSHARK_BASE}/deals?title=${encodeURIComponent(gameTitle)}&limit=5&sortBy=Price`
-  );
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
 
-  if (!res.ok) {
+  try {
+    const res = await fetch(
+      `${CHEAPSHARK_BASE}/deals?title=${encodeURIComponent(gameTitle)}&limit=5&sortBy=Price`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      return [];
+    }
+
+    return res.json();
+  } catch {
+    clearTimeout(timeout);
     return [];
   }
-
-  return res.json();
 }
