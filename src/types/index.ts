@@ -26,6 +26,7 @@ export interface Game {
   genres: string[];
   developer: string | null;
   release_year: number | null;
+  release_date: string | null;
   created_at: string;
 }
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**BackToLobby** is a social platform for video game discovery and tracking — "Letterboxd for games." Users maintain a gaming diary, rate titles (1-5 stars with half-stars), write reviews (Markdown), and discover trending games. The aesthetic is "Apple Liquid Glass" — glassmorphism on a dark background with vibrant accents.
+**BackToLobby** is a social platform for video game discovery and tracking — "Letterboxd for games." Users maintain a gaming diary, rate titles (1-5 stars with half-stars), write reviews (Markdown), and discover trending games. The aesthetic is "Apple Liquid Glass" — glassmorphism on a clean background with vibrant accents.
 
 ## Tech Stack
 
@@ -39,6 +39,30 @@ No test framework is configured. Validation is: type-check + lint + visual brows
 
 4. **Test every feature visually in the browser before marking complete.** Type checks and builds passing is necessary but not sufficient.
 
+5. **Update DEVLOG.md before every push.** Add an entry describing what changed, why, and which files were touched.
+
+## Development Workflow
+
+**Session startup:** Always read `DEVLOG.md` first for recent context, then `CHANGELOG.md` for release history.
+
+**Session shutdown:** Update `DEVLOG.md` before pushing.
+
+**Feature flow:**
+1. List ideas or describe the feature
+2. Run `/prd [feature description]` to generate a PRD
+3. Run `/ralph-loop implement the feature described in docs/prds/[prd-file].md`
+4. Update `DEVLOG.md` and `CHANGELOG.md`
+
+**Learning:** Run `/learn [topic]` to get a beginner-friendly explanation of any part of the codebase.
+
+### Custom Skills
+
+| Command | Purpose |
+|---------|---------|
+| `/learn [topic]` | Explains codebase concepts in plain English |
+| `/prd [feature]` | Generates a PRD and saves to `docs/prds/` |
+| `/ralph-loop [task]` | Implements a feature with acceptance-criteria checking |
+
 ## Architecture
 
 ### Directory Structure
@@ -52,7 +76,7 @@ src/
 │       ├── igdb/           # IGDB proxy (POST: action="search"|"popular")
 │       └── prices/         # CheapShark proxy (GET: ?title=)
 ├── components/
-│   ├── ui/                 # shadcn/ui: button, card, input, sheet, dialog
+│   ├── ui/                 # shadcn/ui: button, input, dialog
 │   ├── game/               # GameCard, GameCarousel, GameGrid, PriceCard, GlobalScore, GamePageContent
 │   ├── review/             # StarRating, ReviewCard, ReviewDrawer (Dialog), ReviewDetailDialog, LikeButton, LogGameButton
 │   ├── search/             # CommandPalette (Cmd+K, uses cmdk)
@@ -79,12 +103,19 @@ src/
 │   ├── igdb-transforms.ts  # Raw IGDB → local Game schema transforms
 │   ├── prices.ts           # CheapShark client — SERVER ONLY
 │   ├── auth-context.tsx    # AuthProvider context
-│   ├── motion.ts           # Shared Framer Motion variants (pageVariants, staggerContainer, staggerItem, fadeIn)
+│   ├── motion.ts           # Shared Framer Motion variants (pageVariants, staggerContainer, staggerItem)
 │   └── utils.ts            # cn() + timeAgo()
 ├── types/
 │   ├── index.ts            # User, Game, Review, Like, Platform
 │   └── igdb.ts             # Raw IGDB API response types
 └── middleware.ts            # Root: calls updateSession, skips when Supabase not configured
+
+.claude/commands/
+├── learn.md                 # /learn skill — codebase education
+└── prd.md                   # /prd skill — PRD generation
+
+docs/prds/
+└── _template.md             # PRD template
 ```
 
 Path alias: `@/*` → `src/*`
@@ -101,7 +132,7 @@ Path alias: `@/*` → `src/*`
 
 5. **Search has two modes:** a Cmd+K command palette (`cmdk`) for quick access and a full `/search` page. The palette links to `/search?q=` to hand off queries.
 
-6. **Theme: dark default with light mode available.** Use `next-themes`. All glass effects must work on both themes.
+6. **Theme: light default with dark mode available.** Use `next-themes`. All glass effects must work on both themes.
 
 7. **Graceful degradation.** All hooks and pages check `isSupabaseConfigured()` and return empty states rather than crashing when env vars are missing.
 
@@ -168,4 +199,15 @@ STEAM_API_KEY=
 
 ## Deployment
 
-Multi-stage Dockerfile (Node 22 Alpine) + `docker-compose.yml`. Next.js `output: "standalone"` is set in `next.config.ts`. Run with `docker compose up`.
+Two-branch model on Vercel:
+
+| Branch | Environment | URL |
+|---|---|---|
+| `main` | Preview (staging) | Vercel preview URL |
+| `production` | Production (live) | backtolobby.vercel.app |
+
+CI (`.github/workflows/ci.yml`) runs `pnpm type-check` + `pnpm lint` on every push to `main` and every PR to `production`.
+
+To deploy to production: open a PR from `main` → `production`, review, then merge.
+
+Next.js `output: "standalone"` is set in `next.config.ts`. A multi-stage Dockerfile (Node 22 Alpine) + `docker-compose.yml` are also available for self-hosting.

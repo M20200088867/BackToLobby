@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Gamepad2 } from "lucide-react";
+import { Gamepad2, Clock } from "lucide-react";
 import { LogGameButton } from "@/components/review/log-game-button";
 import { ReviewCard } from "@/components/review/review-card";
 import { ReviewCardSkeleton } from "@/components/review/review-card-skeleton";
@@ -10,6 +10,7 @@ import { ReviewFilters } from "@/components/review/review-filters";
 import { useGameReviews, type ReviewSortOption } from "@/hooks/use-reviews";
 import { GlobalScore } from "@/components/game/global-score";
 import { PriceCard } from "@/components/game/price-card";
+import { isGameUnreleased, formatReleaseDate } from "@/lib/utils";
 import type { Game } from "@/types";
 
 interface GamePageContentProps {
@@ -21,6 +22,7 @@ interface GamePageContentProps {
 export function GamePageContent({ game, summary, platforms }: GamePageContentProps) {
   const [reviewSort, setReviewSort] = useState<ReviewSortOption>("newest");
   const { data: reviews, isLoading } = useGameReviews(game.igdb_id, reviewSort);
+  const unreleased = isGameUnreleased(game);
 
   return (
     <div className="space-y-10">
@@ -56,7 +58,14 @@ export function GamePageContent({ game, summary, platforms }: GamePageContentPro
               {game.developer && game.release_year && (
                 <span className="text-white/20">&bull;</span>
               )}
-              {game.release_year && <span>{game.release_year}</span>}
+              {unreleased && game.release_date ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                  <Clock className="h-3.5 w-3.5" />
+                  Releases {formatReleaseDate(game.release_date)}
+                </span>
+              ) : (
+                game.release_year && <span>{game.release_year}</span>
+              )}
             </div>
 
             {game.genres.length > 0 && (
@@ -87,29 +96,43 @@ export function GamePageContent({ game, summary, platforms }: GamePageContentPro
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Reviews Section */}
         <section className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">Reviews</h2>
-            <ReviewFilters value={reviewSort} onChange={setReviewSort} />
-          </div>
-
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {Array.from({ length: 2 }, (_, i) => (
-                <ReviewCardSkeleton key={i} />
-              ))}
-            </div>
-          ) : !reviews || reviews.length === 0 ? (
-            <div className="glass p-8 rounded-2xl text-center">
-              <p className="text-muted-foreground">
-                No reviews yet. Be the first to review this game!
-              </p>
-            </div>
+          {unreleased ? (
+            <>
+              <h2 className="text-2xl font-bold">Reviews</h2>
+              <div className="glass p-8 rounded-2xl text-center">
+                <Clock className="h-8 w-8 text-muted-foreground/50 mx-auto mb-3" />
+                <p className="text-muted-foreground">
+                  Reviews will be available after the game is released.
+                </p>
+              </div>
+            </>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {reviews.map((review) => (
-                <ReviewCard key={review.id} review={review} />
-              ))}
-            </div>
+            <>
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">Reviews</h2>
+                <ReviewFilters value={reviewSort} onChange={setReviewSort} />
+              </div>
+
+              {isLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {Array.from({ length: 2 }, (_, i) => (
+                    <ReviewCardSkeleton key={i} />
+                  ))}
+                </div>
+              ) : !reviews || reviews.length === 0 ? (
+                <div className="glass p-8 rounded-2xl text-center">
+                  <p className="text-muted-foreground">
+                    No reviews yet. Be the first to review this game!
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {reviews.map((review) => (
+                    <ReviewCard key={review.id} review={review} />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </section>
 

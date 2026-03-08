@@ -1,8 +1,9 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useReviewDrawer } from "./review-drawer-context";
+import { isGameUnreleased } from "@/lib/utils";
 import type { Game } from "@/types";
 
 interface LogGameButtonProps {
@@ -12,8 +13,11 @@ interface LogGameButtonProps {
 
 export function LogGameButton({ game, variant = "standalone" }: LogGameButtonProps) {
   const { openReviewDrawer } = useReviewDrawer();
+  const unreleased = isGameUnreleased(game);
 
   if (variant === "card-overlay") {
+    if (unreleased) return null;
+
     return (
       <button
         type="button"
@@ -27,6 +31,18 @@ export function LogGameButton({ game, variant = "standalone" }: LogGameButtonPro
       >
         <Plus className="h-4 w-4" />
       </button>
+    );
+  }
+
+  if (unreleased) {
+    return (
+      <Button
+        disabled
+        className="rounded-xl opacity-60 cursor-not-allowed"
+      >
+        <Clock className="h-4 w-4 mr-2" />
+        Not Yet Released
+      </Button>
     );
   }
 

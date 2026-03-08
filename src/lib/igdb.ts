@@ -80,9 +80,36 @@ export async function getGameBySlug(slug: string) {
   return results[0] ?? null;
 }
 
-export async function getPopularGames(limit = 12) {
+export async function igdbFetchByIds(ids: number[]) {
+  if (ids.length === 0) return [];
+  const idList = ids.join(",");
   return igdbFetch(
     "games",
-    `fields name,slug,cover.image_id,genres.name,first_release_date,involved_companies.company.name,total_rating_count; where total_rating_count > 50 & cover != null; sort total_rating_count desc; limit ${limit};`
+    `fields name,slug,cover.image_id,genres.name,first_release_date,involved_companies.company.name,total_rating_count; where id = (${idList}) & cover != null; limit ${ids.length};`
+  );
+}
+
+export async function getPopularGames(limit = 12, offset = 0) {
+  const now = Math.floor(Date.now() / 1000);
+  return igdbFetch(
+    "games",
+    `fields name,slug,cover.image_id,genres.name,first_release_date,involved_companies.company.name,total_rating_count; where total_rating_count > 50 & cover != null & first_release_date <= ${now}; sort total_rating_count desc; offset ${offset}; limit ${limit};`
+  );
+}
+
+export async function getNewReleases(limit = 8) {
+  const ninetyDaysAgo = Math.floor((Date.now() - 90 * 24 * 60 * 60 * 1000) / 1000);
+  const now = Math.floor(Date.now() / 1000);
+  return igdbFetch(
+    "games",
+    `fields name,slug,cover.image_id,genres.name,first_release_date,involved_companies.company.name,total_rating_count; where first_release_date >= ${ninetyDaysAgo} & first_release_date <= ${now} & cover != null & total_rating_count > 5; sort total_rating_count desc; limit ${limit};`
+  );
+}
+
+export async function getHypedGames(limit = 6) {
+  const now = Math.floor(Date.now() / 1000);
+  return igdbFetch(
+    "games",
+    `fields name,slug,cover.image_id,genres.name,first_release_date,involved_companies.company.name,hypes; where hypes > 1 & first_release_date > ${now} & cover != null; sort hypes desc; limit ${limit};`
   );
 }

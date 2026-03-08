@@ -31,6 +31,13 @@ export function extractYear(
   return new Date(timestamp * 1000).getFullYear();
 }
 
+export function extractReleaseDate(
+  timestamp?: number
+): string | null {
+  if (!timestamp) return null;
+  return new Date(timestamp * 1000).toISOString();
+}
+
 export function transformIGDBGame(raw: IGDBGame): Game {
   return {
     id: 0, // sentinel — DB assigns real ID on insert
@@ -43,6 +50,7 @@ export function transformIGDBGame(raw: IGDBGame): Game {
     genres: raw.genres?.map((g) => g.name) ?? [],
     developer: extractDeveloper(raw.involved_companies),
     release_year: extractYear(raw.first_release_date),
+    release_date: extractReleaseDate(raw.first_release_date),
     created_at: new Date().toISOString(),
   };
 }

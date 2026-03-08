@@ -7,17 +7,17 @@ import { transformIGDBGames } from "@/lib/igdb-transforms";
 import { GameCarousel } from "./game-carousel";
 import { GameCardSkeleton } from "./game-card-skeleton";
 
-async function fetchPopularGames() {
+async function fetchTrendingGames() {
   const res = await fetch("/api/igdb", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "popular", limit: 20 }),
+    body: JSON.stringify({ action: "trending", limit: 20 }),
   });
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     if (data.error === "not_configured") return null;
-    throw new Error("Failed to fetch popular games");
+    throw new Error("Failed to fetch trending games");
   }
 
   const raw: IGDBGame[] = await res.json();
@@ -26,9 +26,9 @@ async function fetchPopularGames() {
 
 export function TrendingGames() {
   const { data: games, isLoading } = useQuery({
-    queryKey: ["igdb-popular"],
-    queryFn: fetchPopularGames,
-    staleTime: 5 * 60 * 1000,
+    queryKey: ["igdb-trending"],
+    queryFn: fetchTrendingGames,
+    staleTime: 10 * 60 * 1000,
     retry: 1,
   });
 

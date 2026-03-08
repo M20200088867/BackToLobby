@@ -7,6 +7,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/helpers";
 import { createClient } from "@/lib/supabase/client";
 import { ReviewDrawer } from "./review-drawer";
 import { FavoriteGamePrompt } from "@/components/user/favorite-game-prompt";
+import { isGameUnreleased } from "@/lib/utils";
 import type { Game, Review } from "@/types";
 
 interface ReviewDrawerContextValue {
@@ -49,6 +50,9 @@ export function ReviewDrawerProvider({ children }: { children: React.ReactNode }
           waited += waitInterval;
         }
       }
+
+      // Block reviews on unreleased games
+      if (isGameUnreleased(targetGame)) return;
 
       // Re-read after potential wait
       const finalAuth = authRef.current;
