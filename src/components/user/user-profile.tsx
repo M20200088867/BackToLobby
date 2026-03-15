@@ -4,13 +4,20 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Pencil, X, Check, Loader2, Camera } from "lucide-react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/helpers";
 import { useAuthContext } from "@/lib/auth-context";
 import { uploadAvatar, AvatarUploadError } from "@/lib/supabase/storage";
+import { useUsernameCheck } from "@/hooks/use-username-check";
+import { validateUsername } from "@/lib/username-validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CountryCombobox } from "@/components/ui/combobox";
+import { countries } from "@/lib/countries";
 import type { User, Review } from "@/types";
+
+const PLATFORMS = ["PC", "PlayStation", "Xbox", "Nintendo Switch", "Mobile"] as const;
 
 interface UserProfileProps {
   profile: User;
@@ -44,8 +51,20 @@ export function UserProfile({ profile: initialProfile, isOwner, userReviews }: U
     steam_id: profile.steam_id ?? "",
     psn_id: profile.psn_id ?? "",
     xbox_id: profile.xbox_id ?? "",
+    country: profile.country ?? "",
+    favorite_platforms: profile.favorite_platforms ?? [] as string[],
     favorite_game_id: profile.favorite_game_id ?? null as number | null,
   });
+
+  const { status: usernameStatus, error: usernameError } = useUsernameCheck(
+    editing ? form.username : "",
+    profile.id
+  );
+
+  const usernameChanged = form.username !== profile.username;
+  const usernameValid = usernameChanged
+    ? validateUsername(form.username).valid && usernameStatus === "available"
+    : true;
 
   function startEditing() {
     setForm({
@@ -54,11 +73,22 @@ export function UserProfile({ profile: initialProfile, isOwner, userReviews }: U
       steam_id: profile.steam_id ?? "",
       psn_id: profile.psn_id ?? "",
       xbox_id: profile.xbox_id ?? "",
+      country: profile.country ?? "",
+      favorite_platforms: profile.favorite_platforms ?? [],
       favorite_game_id: profile.favorite_game_id ?? null,
     });
     setPendingAvatarUrl(null);
     setError(null);
     setEditing(true);
+  }
+
+  function togglePlatform(platform: string) {
+    setForm((f) => ({
+      ...f,
+      favorite_platforms: f.favorite_platforms.includes(platform)
+        ? f.favorite_platforms.filter((p) => p !== platform)
+        : [...f.favorite_platforms, platform],
+    }));
   }
 
   async function handleAvatarFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -79,7 +109,6 @@ export function UserProfile({ profile: initialProfile, isOwner, userReviews }: U
       }
     } finally {
       setAvatarUploading(false);
-      // Reset input so same file can be selected again
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
@@ -88,6 +117,19 @@ export function UserProfile({ profile: initialProfile, isOwner, userReviews }: U
     if (!isSupabaseConfigured()) {
       setError("Supabase is not configured. Cannot save profile.");
       return;
+    }
+
+    // Validate username if changed
+    if (usernameChanged) {
+      const validation = validateUsername(form.username);
+      if (!validation.valid) {
+        setError(validation.error ?? "Invalid username");
+        return;
+      }
+      if (usernameStatus !== "available") {
+        setError("Username is not available");
+        return;
+      }
     }
 
     setSaving(true);
@@ -100,6 +142,8 @@ export function UserProfile({ profile: initialProfile, isOwner, userReviews }: U
       steam_id: form.steam_id.trim() || null,
       psn_id: form.psn_id.trim() || null,
       xbox_id: form.xbox_id.trim() || null,
+      country: form.country || null,
+      favorite_platforms: form.favorite_platforms.length > 0 ? form.favorite_platforms : null,
       favorite_game_id: form.favorite_game_id ?? null,
     };
 
@@ -126,21 +170,26 @@ export function UserProfile({ profile: initialProfile, isOwner, userReviews }: U
 
     if (data) {
       const savedProfile = data as User;
-      const usernameChanged = savedProfile.username !== profile.username;
+      const didChangeUsername = savedProfile.username !== profile.username;
       setProfile(savedProfile);
       setPendingAvatarUrl(null);
       await refreshProfile();
       setSaving(false);
-      if (usernameChanged) {
+      setEditing(false);
+      if (didChangeUsername) {
+        toast.success("Username updated!");
         router.replace(`/user/${savedProfile.username}`);
         return;
       }
+      toast.success("Profile saved!");
     }
-    setEditing(false);
   }
 
   const displayAvatarUrl = pendingAvatarUrl ?? profile.avatar_url;
   const hasBadges = profile.steam_id || profile.psn_id || profile.xbox_id;
+  const countryInfo = profile.country
+    ? countries.find((c) => c.code === profile.country)
+    : null;
 
   // Build list of reviewed games for the favorite game dropdown
   const reviewedGames = userReviews
@@ -205,15 +254,22 @@ export function UserProfile({ profile: initialProfile, isOwner, userReviews }: U
                 <h1 className="text-2xl sm:text-3xl font-bold truncate">
                   @{profile.username}
                 </h1>
-                {profile.created_at && (
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    Joined{" "}
-                    {new Date(profile.created_at).toLocaleDateString("en-US", {
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
-                )}
+                <div className="flex items-center gap-2 mt-0.5">
+                  {countryInfo && (
+                    <span className="text-sm" title={countryInfo.name}>
+                      {countryInfo.flag}
+                    </span>
+                  )}
+                  {profile.created_at && (
+                    <p className="text-sm text-muted-foreground">
+                      Joined{" "}
+                      {new Date(profile.created_at).toLocaleDateString("en-US", {
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </p>
+                  )}
+                </div>
               </div>
               {isOwner && !editing && (
                 <Button
@@ -238,16 +294,28 @@ export function UserProfile({ profile: initialProfile, isOwner, userReviews }: U
               </p>
             )}
 
-            {!editing && hasBadges && (
+            {!editing && (
               <div className="flex flex-wrap gap-2 mt-3">
-                {profile.steam_id && (
-                  <PlatformBadge label="Steam" value={profile.steam_id} />
-                )}
-                {profile.psn_id && (
-                  <PlatformBadge label="PSN" value={profile.psn_id} />
-                )}
-                {profile.xbox_id && (
-                  <PlatformBadge label="Xbox" value={profile.xbox_id} />
+                {profile.favorite_platforms?.map((p) => (
+                  <span
+                    key={p}
+                    className="glass border border-white/10 rounded-lg px-3 py-1.5 text-xs font-medium"
+                  >
+                    {p}
+                  </span>
+                ))}
+                {hasBadges && (
+                  <>
+                    {profile.steam_id && (
+                      <PlatformBadge label="Steam" value={profile.steam_id} />
+                    )}
+                    {profile.psn_id && (
+                      <PlatformBadge label="PSN" value={profile.psn_id} />
+                    )}
+                    {profile.xbox_id && (
+                      <PlatformBadge label="Xbox" value={profile.xbox_id} />
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -257,15 +325,41 @@ export function UserProfile({ profile: initialProfile, isOwner, userReviews }: U
         {/* Edit Form */}
         {editing && (
           <div className="mt-5 space-y-4">
+            {/* Username with validation */}
             <div className="space-y-2">
               <label className="block text-sm font-medium">Username</label>
-              <Input
-                value={form.username}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, username: e.target.value }))
-                }
-                className="glass border-white/10 rounded-xl"
-              />
+              <div className="relative">
+                <Input
+                  value={form.username}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      username: e.target.value.toLowerCase(),
+                    }))
+                  }
+                  className="glass border-white/10 rounded-xl pr-10"
+                />
+                {usernameChanged && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {usernameStatus === "checking" && (
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    )}
+                    {usernameStatus === "available" && (
+                      <Check className="h-4 w-4 text-green-500" />
+                    )}
+                    {(usernameStatus === "taken" ||
+                      usernameStatus === "invalid") && (
+                      <X className="h-4 w-4 text-red-500" />
+                    )}
+                  </div>
+                )}
+              </div>
+              {usernameChanged && usernameError && (
+                <p className="text-xs text-red-400">{usernameError}</p>
+              )}
+              {usernameChanged && usernameStatus === "available" && (
+                <p className="text-xs text-green-500">Username is available</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -278,6 +372,36 @@ export function UserProfile({ profile: initialProfile, isOwner, userReviews }: U
                 rows={3}
                 className="w-full glass border border-white/10 rounded-xl px-3 py-2 text-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
               />
+            </div>
+
+            {/* Country */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium">Country</label>
+              <CountryCombobox
+                value={form.country}
+                onChange={(code) => setForm((f) => ({ ...f, country: code }))}
+              />
+            </div>
+
+            {/* Favorite Platforms */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium">Favorite Platforms</label>
+              <div className="flex flex-wrap gap-2">
+                {PLATFORMS.map((platform) => (
+                  <button
+                    key={platform}
+                    type="button"
+                    onClick={() => togglePlatform(platform)}
+                    className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                      form.favorite_platforms.includes(platform)
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "glass border-white/10 text-muted-foreground hover:text-foreground hover:border-white/20"
+                    }`}
+                  >
+                    {platform}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Favorite Game picker */}
@@ -309,37 +433,44 @@ export function UserProfile({ profile: initialProfile, isOwner, userReviews }: U
               )}
             </div>
 
+            {/* Gaming IDs — conditional on selected platforms */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium">Steam ID</label>
-                <Input
-                  value={form.steam_id}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, steam_id: e.target.value }))
-                  }
-                  className="glass border-white/10 rounded-xl"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium">PSN ID</label>
-                <Input
-                  value={form.psn_id}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, psn_id: e.target.value }))
-                  }
-                  className="glass border-white/10 rounded-xl"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium">Xbox ID</label>
-                <Input
-                  value={form.xbox_id}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, xbox_id: e.target.value }))
-                  }
-                  className="glass border-white/10 rounded-xl"
-                />
-              </div>
+              {form.favorite_platforms.includes("PC") && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium">Steam ID</label>
+                  <Input
+                    value={form.steam_id}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, steam_id: e.target.value }))
+                    }
+                    className="glass border-white/10 rounded-xl"
+                  />
+                </div>
+              )}
+              {form.favorite_platforms.includes("PlayStation") && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium">PSN ID</label>
+                  <Input
+                    value={form.psn_id}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, psn_id: e.target.value }))
+                    }
+                    className="glass border-white/10 rounded-xl"
+                  />
+                </div>
+              )}
+              {form.favorite_platforms.includes("Xbox") && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium">Xbox ID</label>
+                  <Input
+                    value={form.xbox_id}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, xbox_id: e.target.value }))
+                    }
+                    className="glass border-white/10 rounded-xl"
+                  />
+                </div>
+              )}
             </div>
 
             {error && (
@@ -364,7 +495,7 @@ export function UserProfile({ profile: initialProfile, isOwner, userReviews }: U
                 onClick={save}
                 size="sm"
                 className="rounded-xl gap-1.5"
-                disabled={saving || avatarUploading}
+                disabled={saving || avatarUploading || !usernameValid}
               >
                 {saving ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />

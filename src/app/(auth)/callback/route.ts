@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isSupabaseConfigured } from "@/lib/supabase/helpers";
+import { validateUsername } from "@/lib/username-validation";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -45,15 +46,17 @@ export async function GET(request: NextRequest) {
         .single();
 
       if (!existingProfile) {
-        // Create new profile from OAuth data
         const metadata = data.user.user_metadata;
         const email = data.user.email || "";
 
-        // Generate username from email or name
-        let username =
-          metadata?.name?.toLowerCase().replace(/\s+/g, "") ||
-          email.split("@")[0] ||
-          `user${Date.now()}`;
+        // Prefer username from signup metadata, validate server-side, fall back to email/name
+        let username = metadata?.username;
+        if (!username || !validateUsername(username).valid) {
+          username =
+            metadata?.name?.toLowerCase().replace(/[^a-z0-9_]/g, "") ||
+            email.split("@")[0]?.replace(/[^a-z0-9_]/g, "") ||
+            `user${Date.now()}`;
+        }
 
         // Ensure username is unique by checking and appending random suffix if needed
         const { data: usernameCheck } = await supabase
@@ -70,10 +73,12 @@ export async function GET(request: NextRequest) {
           id: data.user.id,
           username,
           avatar_url: metadata?.avatar_url || metadata?.picture || null,
-          bio: null,
-          steam_id: null,
-          psn_id: null,
-          xbox_id: null,
+          bio: metadata?.bio || null,
+          steam_id: metadata?.steam_id || null,
+          psn_id: metadata?.psn_id || null,
+          xbox_id: metadata?.xbox_id || null,
+          country: metadata?.country || null,
+          favorite_platforms: metadata?.favorite_platforms || null,
         });
 
         if (insertError) {

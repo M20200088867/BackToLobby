@@ -7,6 +7,8 @@ export interface User {
   steam_id: string | null;
   psn_id: string | null;
   xbox_id: string | null;
+  country: string | null;
+  favorite_platforms: string[] | null;
   created_at: string;
   favorite_game_id: number | null;
   favorite_game?: {

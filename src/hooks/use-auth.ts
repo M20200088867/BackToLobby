@@ -16,15 +16,18 @@ function authUserToMinimal(supabaseUser: SupabaseUser): User {
   return {
     id: supabaseUser.id,
     username:
+      meta.username ||
       meta.name?.toLowerCase().replace(/[^a-z0-9]/g, "") ||
       email.split("@")[0]?.replace(/[^a-z0-9]/g, "") ||
       "user",
     avatar_url: meta.avatar_url ?? meta.picture ?? null,
     cover_url: null,
-    bio: null,
-    steam_id: null,
-    psn_id: null,
-    xbox_id: null,
+    bio: meta.bio ?? null,
+    steam_id: meta.steam_id ?? null,
+    psn_id: meta.psn_id ?? null,
+    xbox_id: meta.xbox_id ?? null,
+    country: meta.country ?? null,
+    favorite_platforms: meta.favorite_platforms ?? null,
     created_at: supabaseUser.created_at,
     favorite_game_id: null,
   };
@@ -77,7 +80,9 @@ export function useAuth() {
         const email = supabaseUser.email || "";
         const metadata = supabaseUser.user_metadata;
 
+        // Prefer username from signup metadata, fall back to email-prefix generation
         let username =
+          metadata?.username ||
           metadata?.name?.toLowerCase().replace(/[^a-z0-9]/g, "") ||
           email.split("@")[0]?.replace(/[^a-z0-9]/g, "") ||
           `user${Date.now()}`;
@@ -99,10 +104,12 @@ export function useAuth() {
             id: supabaseUser.id,
             username,
             avatar_url: metadata?.avatar_url || metadata?.picture || null,
-            bio: null,
-            steam_id: null,
-            psn_id: null,
-            xbox_id: null,
+            bio: metadata?.bio || null,
+            steam_id: metadata?.steam_id || null,
+            psn_id: metadata?.psn_id || null,
+            xbox_id: metadata?.xbox_id || null,
+            country: metadata?.country || null,
+            favorite_platforms: metadata?.favorite_platforms || null,
           })
           .select("*")
           .single();
@@ -151,6 +158,31 @@ export function useAuth() {
           console.error("Failed to fetch user profile:", error.message);
           return null;
         }
+        // Safety net: if profile was created without metadata (e.g. JWT race),
+        // sync missing fields from auth user_metadata
+        const meta = supabaseUser.user_metadata ?? {};
+        if (data && meta.username && data.username !== meta.username) {
+          const updates: Record<string, unknown> = {};
+          if (meta.username) updates.username = meta.username;
+          if (meta.country && !data.country) updates.country = meta.country;
+          if (meta.favorite_platforms && !data.favorite_platforms)
+            updates.favorite_platforms = meta.favorite_platforms;
+          if (meta.bio && !data.bio) updates.bio = meta.bio;
+          if (meta.steam_id && !data.steam_id) updates.steam_id = meta.steam_id;
+          if (meta.psn_id && !data.psn_id) updates.psn_id = meta.psn_id;
+          if (meta.xbox_id && !data.xbox_id) updates.xbox_id = meta.xbox_id;
+
+          if (Object.keys(updates).length > 0) {
+            const { data: updated } = await supabase
+              .from("users")
+              .update(updates)
+              .eq("id", data.id)
+              .select("*")
+              .single();
+            if (updated) return updated as User;
+          }
+        }
+
         return data as User | null;
       } catch (err) {
         console.error("Failed to fetch user profile:", err);
@@ -302,7 +334,8 @@ export function useAuth() {
   const signUpWithEmail = useCallback(
     async (
       email: string,
-      password: string
+      password: string,
+      metadata?: Record<string, unknown>
     ): Promise<{ error: string | null; needsConfirmation: boolean }> => {
       if (!configured)
         return { error: "Supabase is not configured", needsConfirmation: false };
@@ -313,6 +346,7 @@ export function useAuth() {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/confirm`,
+            data: metadata,
           },
         });
 
@@ -334,8 +368,30 @@ export function useAuth() {
         }
 
         // If there's a session, auto-confirmation is enabled and sign-in happened.
-        // onAuthStateChange will fire SIGNED_IN and handle the state update.
-        if (data.session) {
+        // Create profile immediately with the metadata we have in-memory,
+        // because the JWT minted by signUp may not include custom metadata yet,
+        // so onAuthStateChange → createProfile would fall back to email-prefix.
+        if (data.session && data.user) {
+          try {
+            const profileUsername =
+              (metadata?.username as string) ||
+              email.split("@")[0]?.replace(/[^a-z0-9_]/g, "") ||
+              `user${Date.now()}`;
+
+            await supabase.from("users").insert({
+              id: data.user.id,
+              username: profileUsername,
+              avatar_url: null,
+              bio: (metadata?.bio as string) || null,
+              steam_id: (metadata?.steam_id as string) || null,
+              psn_id: (metadata?.psn_id as string) || null,
+              xbox_id: (metadata?.xbox_id as string) || null,
+              country: (metadata?.country as string) || null,
+              favorite_platforms: (metadata?.favorite_platforms as string[]) || null,
+            });
+          } catch {
+            // 23505 (unique violation) is fine — another path created it first
+          }
           return { error: null, needsConfirmation: false };
         }
 
