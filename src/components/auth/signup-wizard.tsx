@@ -491,7 +491,7 @@ export function SignupWizard() {
               <div className="space-y-2">
                 <label className="block text-sm font-medium">Avatar</label>
                 <div className="flex items-center gap-4">
-                  <div className="relative h-20 w-20 rounded-2xl overflow-hidden border-2 border-black/[0.06] dark:border-white/10 glass shrink-0">
+                  <div className="relative h-20 w-20 rounded-2xl overflow-hidden border-2 border-white/10 glass shrink-0">
                     {form.avatarPreview ? (
                       <Image
                         src={form.avatarPreview}

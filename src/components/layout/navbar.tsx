@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Gamepad2 } from "lucide-react";
 import { CommandPalette } from "@/components/search/command-palette";
-import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
 
 export function Navbar() {
@@ -19,7 +18,6 @@ export function Navbar() {
         </Link>
         <div className="flex items-center gap-2 sm:gap-4">
           <CommandPalette />
-          <ThemeToggle />
           <UserMenu />
         </div>
       </div>

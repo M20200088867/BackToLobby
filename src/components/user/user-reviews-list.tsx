@@ -93,7 +93,7 @@ export function UserReviewsList({ userId, isOwner, favoriteGame }: UserReviewsLi
               </Link>
             </div>
           ) : isOwner && hasReviews ? (
-            <div className="glass rounded-2xl p-4 border border-dashed border-black/10 dark:border-white/10 space-y-2">
+            <div className="glass rounded-2xl p-4 border border-dashed border-white/10 space-y-2">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Favorite Game
               </p>
@@ -166,7 +166,7 @@ export function UserReviewsList({ userId, isOwner, favoriteGame }: UserReviewsLi
         <h2 className="text-lg font-semibold mb-4">Reviews</h2>
 
         {isLoading ? (
-          <div className="divide-y divide-black/[0.04] dark:divide-white/5">
+          <div className="divide-y divide-white/5">
             {Array.from({ length: 3 }).map((_, i) => (
               <ReviewSkeleton key={i} />
             ))}
@@ -174,7 +174,7 @@ export function UserReviewsList({ userId, isOwner, favoriteGame }: UserReviewsLi
         ) : !hasReviews ? (
           <p className="text-sm text-muted-foreground">No reviews yet.</p>
         ) : (
-          <div className="divide-y divide-black/[0.04] dark:divide-white/5">
+          <div className="divide-y divide-white/5">
             {reviews.map((review) => (
               <div key={review.id} className="flex items-start gap-4 py-3">
                 {review.game ? (

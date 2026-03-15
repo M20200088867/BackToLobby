@@ -71,6 +71,20 @@ export function GameCarousel({ games }: GameCarouselProps) {
         ))}
       </motion.div>
 
+      {/* Left fade */}
+      <div
+        className={`absolute left-0 top-0 bottom-0 w-20 z-[5] pointer-events-none bg-gradient-to-r from-[var(--background)] to-transparent transition-opacity duration-300 ${
+          canScrollLeft ? "opacity-100" : "opacity-0"
+        }`}
+      />
+
+      {/* Right fade */}
+      <div
+        className={`absolute right-0 top-0 bottom-0 w-20 z-[5] pointer-events-none bg-gradient-to-l from-[var(--background)] to-transparent transition-opacity duration-300 ${
+          canScrollRight ? "opacity-100" : "opacity-0"
+        }`}
+      />
+
       {/* Prev button */}
       {canScrollLeft && (
         <button

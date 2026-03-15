@@ -14,7 +14,7 @@ interface GameCardProps {
 export function GameCard({ game }: GameCardProps) {
   return (
     <motion.div
-      className="group relative hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/30 transition-shadow"
+      className="group relative hover:shadow-xl hover:shadow-black/30 transition-shadow"
       whileHover={{ y: -4 }}
       transition={{ duration: 0.2 }}
     >

@@ -207,7 +207,7 @@ export function UserProfile({ profile: initialProfile, isOwner, userReviews }: U
         <div className="flex items-start gap-5">
           {/* Avatar */}
           <div className="relative shrink-0">
-            <div className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl overflow-hidden border-2 border-black/[0.06] dark:border-white/10 glass">
+            <div className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl overflow-hidden border-2 border-white/10 glass">
               {displayAvatarUrl ? (
                 <Image
                   src={displayAvatarUrl}

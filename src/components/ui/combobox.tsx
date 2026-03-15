@@ -49,7 +49,7 @@ export function CountryCombobox({ value, onChange, disabled }: CountryComboboxPr
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command className="bg-transparent" shouldFilter={false}>
-          <div className="flex items-center border-b border-black/[0.06] dark:border-white/[0.08] px-3">
+          <div className="flex items-center border-b border-white/[0.08] px-3">
             <Command.Input
               placeholder="Search countries..."
               value={search}
@@ -64,7 +64,7 @@ export function CountryCombobox({ value, onChange, disabled }: CountryComboboxPr
                   onChange("");
                   setSearch("");
                 }}
-                className="ml-1 p-1 rounded hover:bg-black/5 dark:hover:bg-white/10"
+                className="ml-1 p-1 rounded hover:bg-white/10"
                 aria-label="Clear country"
               >
                 <X className="h-3.5 w-3.5 text-muted-foreground" />
@@ -86,7 +86,7 @@ export function CountryCombobox({ value, onChange, disabled }: CountryComboboxPr
                   setOpen(false);
                   setSearch("");
                 }}
-                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-black/5 dark:hover:bg-white/10 data-[selected=true]:bg-black/5 dark:data-[selected=true]:bg-white/10"
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-white/10 data-[selected=true]:bg-white/10"
               >
                 <span>{country.flag}</span>
                 <span className="flex-1 truncate">{country.name}</span>
