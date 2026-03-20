@@ -7,4 +7,6 @@ export { ReviewCardSkeleton } from "./review-card-skeleton";
 export { ReviewDetailDialog } from "./review-detail-dialog";
 export { RecentReviews } from "./recent-reviews";
 export { LikeButton } from "./like-button";
+export { GameReviewsDialog } from "./game-reviews-dialog";
+export { ReviewCarouselCard, ReviewCarouselCardSkeleton } from "./review-carousel-card";
 export { ReviewFilters, type ReviewSortOption } from "./review-filters";
